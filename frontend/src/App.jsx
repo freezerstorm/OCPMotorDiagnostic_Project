@@ -1,24 +1,31 @@
 import { useEffect, useState } from 'react';
 import { AppLayout } from './layouts/AppLayout';
-import { HomePage } from './pages/HomePage';
-import { KitConnectionPage } from './pages/KitConnectionPage';
-import { MotorFormPage } from './pages/MotorFormPage';
-import { AcquisitionPage } from './pages/AcquisitionPage';
-import { GraphPage } from './pages/GraphPage';
-import { AnalysisPage } from './pages/AnalysisPage';
-import { ReportPage } from './pages/ReportPage';
-import { HistoryPage } from './pages/HistoryPage';
+import {
+  HomePage,
+  KitConnectionPage,
+  MotorFormPage,
+  AcquisitionPage,
+  GraphPage,
+  AnalysisPage,
+  ReportPage,
+  HistoryPage,
+} from './pages';
+import {
+  setPendingKitId,
+  setPendingMode,
+  setCurrentTestId,
+} from './state/session';
 import './styles.css';
 
 const routes = {
-  home: { label: 'Accueil', component: HomePage },
-  kit: { label: 'Connexion au kit', component: KitConnectionPage },
-  motor: { label: 'Fiche moteur', component: MotorFormPage },
-  acquisition: { label: 'Acquisition', component: AcquisitionPage },
-  graph: { label: 'View graph', component: GraphPage },
-  analysis: { label: 'Analysis', component: AnalysisPage },
-  report: { label: 'Rapport', component: ReportPage },
-  history: { label: 'Historique', component: HistoryPage },
+  home:        { label: 'Accueil',        component: HomePage },
+  kit:         { label: 'Connexion kit',  component: KitConnectionPage },
+  motor:       { label: 'Fiche moteur',   component: MotorFormPage },
+  acquisition: { label: 'Acquisition',    component: AcquisitionPage },
+  graph:       { label: 'View graph',     component: GraphPage },
+  analysis:    { label: 'Analysis',       component: AnalysisPage },
+  report:      { label: 'Rapport',        component: ReportPage },
+  history:     { label: 'Historique',     component: HistoryPage },
 };
 
 function getRoute() {
@@ -33,11 +40,21 @@ export default function App() {
   useEffect(() => {
     const onHashChange = () => setRoute(getRoute());
     window.addEventListener('hashchange', onHashChange);
-    fetch('/api/v1/health').then((r) => setBackendState(r.ok ? 'ok' : 'error')).catch(() => setBackendState('error'));
+    fetch('/api/v1/health')
+      .then((r) => setBackendState(r.ok ? 'ok' : 'error'))
+      .catch(() => setBackendState('error'));
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
-  const navigate = (name) => { window.location.hash = `/${name}`; };
+  // Fonction de navigation. Accepte un deuxième paramètre « params » qui
+  // est stocké dans sessionStorage (mode du test, kit connecté, test courant).
+  const navigate = (name, params = {}) => {
+    if (params.mode) setPendingMode(params.mode);
+    if ('kitId' in params) setPendingKitId(params.kitId);
+    if ('testId' in params) setCurrentTestId(params.testId);
+    window.location.hash = `/${name}`;
+  };
+
   const Page = routes[route].component;
 
   return (
