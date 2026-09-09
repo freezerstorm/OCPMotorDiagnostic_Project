@@ -1,0 +1,1 @@
+export { MotorFormPage } from './pages';
