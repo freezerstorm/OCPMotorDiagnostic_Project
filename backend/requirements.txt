@@ -1,0 +1,11 @@
+# Dépendances Python du backend.
+# Installation :  pip install -r requirements.txt
+# (à lancer depuis le dossier backend/, après avoir activé l'environnement virtuel)
+#
+# Les dépendances sont ajoutées étape par étape, uniquement quand elles sont utiles :
+#   - fastapi / uvicorn   : serveur API                     (Étape 1)
+#   - pydantic-settings   : lecture des variables d'environnement (Étape 1)
+
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic-settings>=2.4

@@ -1,0 +1,49 @@
+# ============================================================
+# Services d'infrastructure du projet — DEV LOCAL uniquement
+#
+#   db   → PostgreSQL 16   (base de données)
+#   mqtt → Mosquitto 2     (broker MQTT, communication ESP32)
+#
+# Lancement :  docker compose up -d
+# Arrêt :      docker compose down
+# Arrêt + suppression des données : docker compose down -v
+#
+# Les mots de passe sont des valeurs de DÉVELOPPEMENT.
+# On peut les surcharger en créant un fichier « .env » à la racine
+# (voir .env.example) : docker compose lit automatiquement le .env.
+# ============================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ocp_diagnostic_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ocp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ocp_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-ocp_diagnostic}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Les données survivent au redémarrage du conteneur
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ocp} -d ${POSTGRES_DB:-ocp_diagnostic}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    container_name: ocp_diagnostic_mqtt
+    restart: unless-stopped
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+    volumes:
+      # Configuration du broker (voir infra/mosquitto/config/mosquitto.conf)
+      - ./infra/mosquitto/config:/mosquitto/config:ro
+      - mqttdata:/mosquitto/data
+
+volumes:
+  pgdata:
+  mqttdata:

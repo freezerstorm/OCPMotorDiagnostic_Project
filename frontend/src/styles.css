@@ -1,0 +1,188 @@
+/* ============================================================
+   Feuille de style globale — Étape 1.
+   Palette « inspirée OCP » : bleu profond industriel + ambre
+   discret. Sobriété et lisibilité avant tout.
+   Les couleurs sont centralisées ici pour être réutilisées
+   par toutes les pages (thème unique).
+   ============================================================ */
+
+:root {
+  /* Palette principale */
+  --c-primary: #1d4f9c;        /* bleu principal */
+  --c-primary-dark: #12366e;   /* bleu foncé (en-tête) */
+  --c-accent: #e8a400;         /* ambre (accent, rappel identité OCP) */
+
+  /* Fond et surfaces */
+  --c-bg: #f3f5f8;
+  --c-surface: #ffffff;
+  --c-border: #d9e0e9;
+
+  /* Texte */
+  --c-text: #17233a;
+  --c-text-muted: #5c6b80;
+
+  /* États */
+  --c-ok: #1e8e3e;
+  --c-error: #c62828;
+  --c-warn: #b8860b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ---------- En-tête ---------- */
+.app-header {
+  background: linear-gradient(180deg, var(--c-primary-dark), var(--c-primary));
+  color: #ffffff;
+}
+
+.app-header-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: var(--c-accent);
+  flex-shrink: 0;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: 0.3px;
+}
+
+.brand-subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.version-badge {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.78rem;
+}
+
+/* ---------- Contenu ---------- */
+.content {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+  display: grid;
+  gap: 20px;
+}
+
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  padding: 22px 26px;
+}
+
+.card h2 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: var(--c-primary-dark);
+}
+
+.card-hint {
+  margin: 0 0 14px;
+  color: var(--c-text-muted);
+  font-size: 0.88rem;
+}
+
+/* ---------- État du système ---------- */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+}
+
+.status-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--c-warn);
+  flex-shrink: 0;
+}
+
+.status-ok {
+  background: #e9f6ee;
+  color: var(--c-ok);
+  border: 1px solid #bfe3cd;
+}
+.status-ok .status-dot {
+  background: var(--c-ok);
+}
+
+.status-error {
+  background: #fdeaea;
+  color: var(--c-error);
+  border: 1px solid #f2c4c4;
+}
+.status-error .status-dot {
+  background: var(--c-error);
+}
+
+.status-checking .status-dot {
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ---------- Divers ---------- */
+.next-steps {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--c-text-muted);
+  font-size: 0.9rem;
+}
+
+.next-steps li + li {
+  margin-top: 4px;
+}
+
+.app-footer {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px 26px;
+  color: var(--c-text-muted);
+  font-size: 0.78rem;
+}
