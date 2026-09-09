@@ -10,7 +10,7 @@
 |---|---|---|
 | 0 — Analyse + plan | ✅ Fait | ✅ Validé (plan GO, Windows, Docker, simulateur d'abord) |
 | 1 — Squelette du projet | ✅ Fait | ⏳ À valider |
-| 2 — Frontend navigation | ⏳ | |
+| 2 — Frontend navigation | ✅ Fait | En attente de validation |
 | 3 — Backend API de base | | |
 | 4 — PostgreSQL + modèles | | |
 | 5 — Formulaire + test manuel | | |

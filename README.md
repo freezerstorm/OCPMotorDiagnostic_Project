@@ -179,6 +179,7 @@ Les dossiers suivants seront ajoutés progressivement (voir `docs/PLAN_DEVELOPPE
 ## État d'avancement
 
 - ✅ **Étape 1 — Squelette du projet** (dossiers, Docker Compose, backend et frontend minimaux)
-- ⏳ Étape 2 — Frontend : navigation et écrans principaux
+- ✅ **Étape 2 — Frontend : navigation et écrans principaux** (navigation hash, gabarit commun et 8 écrans)
+- ⏳ Étape 3 — Backend API de base
 
 Chaque étape est validée avec le stagiaire avant de passer à la suivante.
