@@ -113,14 +113,28 @@ backend : le navigateur n'a besoin que de l'adresse du frontend.
 
 ---
 
-## Tester l'Étape 1 (squelette)
+## Comment tester l'étape actuelle (étapes 3-4)
 
-1. Ouvrir **http://localhost:5173** : page sobre « OCP — Diagnostic Moteurs ».
-2. La carte « État du système » doit afficher **« Backend connecté »**
-   (sinon : le backend n'est pas lancé, voir plus haut).
-3. Ouvrir **http://localhost:8000/api/v1/health** : réponse JSON
-   `{"status": "ok", ...}`.
-4. Ouvrir **http://localhost:8000/docs** : documentation FastAPI.
+1. Lancer le backend (en stockage mémoire pour tester sans PostgreSQL) :
+   ```bash
+   cd backend
+   STORAGE_BACKEND=memory .venv/bin/uvicorn app.main:app --reload --port 8000
+   ```
+   (Sous Windows PowerShell : `$env:STORAGE_BACKEND="memory"; uvicorn app.main:app --reload --port 8000`)
+2. Lancer le frontend dans un second terminal :
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+3. Ouvrir **http://localhost:5173** :
+   - la sidebar doit indiquer **« Backend opérationnel »** (pastille verte) ;
+   - cliquer sur **Nouveau test manuel** → remplir au moins l'ID moteur → Continuer ;
+   - retour à l'accueil : la carte « Derniers tests » affiche le moteur créé ;
+   - la page **Historique** affiche une ligne par diagnostic.
+4. Documentation interactive de l'API : **http://localhost:8000/docs**.
+5. Pour activer PostgreSQL (mode « sql »), lancer `docker compose up -d` puis
+   positionner `STORAGE_BACKEND=sql` dans `backend/.env` et appliquer les
+   migrations : `alembic upgrade head`.
 
 ---
 
@@ -140,46 +154,47 @@ backend : le navigateur n'a besoin que de l'adresse du frontend.
 ├── infra/mosquitto/        ← configuration du broker MQTT
 ├── docs/                   ← plan de développement, documentation
 ├── backend/
-│   ├── requirements.txt    ← dépendances Python
+│   ├── requirements.txt
+│   ├── alembic.ini         ← migrations Alembic
+│   ├── alembic/            ← versions de migration (0001_initial_schema…)
 │   └── app/
 │       ├── main.py         ← point d'entrée FastAPI
-│       └── core/           ← configuration (variables d'environnement)
+│       ├── core/           ← configuration (variables d'environnement)
+│       ├── api/            ← routes HTTP (health, motors, tests)
+│       ├── models/         ← modèles SQLAlchemy (motors, tests, mesures)
+│       ├── schemas/        ← validation Pydantic
+│       ├── services/       ← logique métier
+│       └── db/             ← connexion PostgreSQL
+├── diagnostic_rules/       ← ⭐ moteur de règles indépendant (par paramètre)
 └── frontend/
-    ├── package.json        ← dépendances React
+    ├── package.json
     └── src/
         ├── main.jsx        ← démarrage React
-        ├── App.jsx         ← page d'accueil (provisoire, Étape 1)
-        └── styles.css      ← thème (palette inspirée OCP)
+        ├── App.jsx         ← routage + assembleur
+        ├── styles.css      ← thème (palette inspirée OCP)
+        ├── components/     ← blocs réutilisables (cartes, badges, tableaux)
+        ├── pages/          ← 8 pages (un fichier par écran)
+        ├── services/       ← appels API
+        └── state/          ← utilitaires d'état (sessionStorage pour l'instant)
 ```
 
-Les dossiers suivants seront ajoutés progressivement (voir `docs/PLAN_DEVELOPPEMENT.md`) :
-`backend/app/api`, `backend/app/models`, `backend/app/services`, `backend/app/mqtt`,
-`backend/app/ws`, `backend/app/pdf`, `backend/app/simulator`,
-`backend/diagnostic_rules/`, `frontend/src/pages`, `frontend/src/components`,
-`frontend/src/charts`, `frontend/src/services`, `frontend/src/websocket`,
-`frontend/src/state`, puis `esp32/` et `data_legacy/` (étapes futures).
+Les dossiers suivants seront ajoutés/remplis progressivement :
+`backend/app/mqtt`, `backend/app/ws`, `backend/app/pdf`, `backend/app/simulator`,
+`frontend/src/charts`, `frontend/src/websocket`, puis `esp32/` et `data_legacy/`
+(étapes futures).
 
 ---
 
-## Mini-glossaire (pour bien suivre le projet)
-
-| Terme | Signification simple |
-|---|---|
-| **Backend** | Programme qui tourne sur le serveur : il gère les données et la logique (ici FastAPI). |
-| **Frontend** | Ce qui s'affiche dans le navigateur (ici React). |
-| **API / route** | « Porte d'entrée » du backend : une adresse précise qui attend des demandes et renvoie des réponses JSON. |
-| **JSON** | Format texte universel pour échanger des données entre frontend et backend. |
-| **MQTT / broker** | Protocole de messages léger ; le *broker* (Mosquitto) est le « facteur » qui relaie les messages du kit (ESP32) au backend. |
-| **WebSocket** | Canal temps réel entre backend et navigateur (utilisé pour les mesures en direct). |
-| **PostgreSQL** | Base de données : l'endroit où sont stockés moteurs, tests et mesures. |
-| **Docker** | Outil qui fait tourner des logiciels (PostgreSQL, Mosquitto) dans des « conteneurs » isolés, sans installation compliquée. |
-| **Migration (Alembic)** | Historique versionné des évolutions de la base de données (Étape 4). |
-| **Endpoint** | Voir « API / route ». |
-
 ## État d'avancement
 
-- ✅ **Étape 1 — Squelette du projet** (dossiers, Docker Compose, backend et frontend minimaux)
-- ✅ **Étape 2 — Frontend : navigation et écrans principaux** (navigation hash, gabarit commun et 8 écrans)
-- ⏳ Étape 3 — Backend API de base
+- ✅ **Étape 0** — Analyse initiale + plan (`docs/00_ANALYSE_INITIALE.md`)
+- ✅ **Étape 1** — Squelette du projet (dossiers, Docker Compose, backend/frontend minimaux)
+- ✅ **Étape 2** — Frontend navigation et 8 écrans
+- ✅ **Étape 3** — Backend API de base (routes `/api/v1/motors`, `/api/v1/tests`, schémas, services, stockage mémoire)
+- ✅ **Étape 4** — Modèles SQLAlchemy (motors, diagnostic_tests, manual_measurements, time_series) + migration Alembic initiale
+- 🧩 Squelette du **moteur de règles** (`diagnostic_rules/`) avec la règle courant à vide implémentée ; les autres règles sont en placeholder « seuils à définir » (aucune valeur inventée)
+- ⏳ Étape 5 — Formulaire de diagnostic manuel (mesures d'isolement et résistances)
+- ⏳ Étape 6 — Historique complet (filtres, archivage)
+- …
 
 Chaque étape est validée avec le stagiaire avant de passer à la suivante.

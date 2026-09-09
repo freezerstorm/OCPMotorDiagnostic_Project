@@ -8,11 +8,23 @@
 
 | Étape | Statut | Validation stagiaire |
 |---|---|---|
-| 0 — Analyse + plan | ✅ Fait | ✅ Validé (plan GO, Windows, Docker, simulateur d'abord) |
-| 1 — Squelette du projet | ✅ Fait | ⏳ À valider |
-| 2 — Frontend navigation | ✅ Fait | En attente de validation |
-| 3 — Backend API de base | | |
-| 4 — PostgreSQL + modèles | | |
+| 0 — Analyse + plan | ✅ Fait | ✅ |
+| 1 — Squelette du projet | ✅ Fait | ✅ (fusionné dans main) |
+| 2 — Frontend navigation | ✅ Fait | ✅ (fusionné dans main) |
+| 3 — Backend API de base | ✅ Fait | En attente de validation |
+| 4 — PostgreSQL + modèles SQLAlchemy + Alembic | ✅ Fait | En attente de validation |
+| 10a — Squelette du moteur de règles | 🧩 Fait (structure + règle courant à vide) | En attente |
+| 5 — Formulaire test manuel (mesures) | | |
+| 6 — Historique complet | | |
+| 7 — MQTT + simulateur | | |
+| 8 — Acquisition auto ~60 s | | |
+| 9 — View Graph (Recharts) | | |
+| 10b — Autres règles de diagnostic | | |
+| 11 — Page Analysis | | |
+| 12 — Rapport PDF (WeasyPrint) | | |
+| 13 — Parcours auto complet | | |
+| 14 — Tests et finitions | | |
+| 15 — Architecture base historique | | |
 | 5 — Formulaire + test manuel | | |
 | 6 — Historique | | |
 | 7 — MQTT + simulateur | | |
