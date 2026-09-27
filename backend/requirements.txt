@@ -1,0 +1,23 @@
+# Dépendances Python du backend.
+# Installation :  pip install -r requirements.txt
+# (à lancer depuis le dossier backend/, après avoir activé l'environnement virtuel)
+#
+# Les dépendances sont ajoutées étape par étape, uniquement quand elles sont utiles :
+#   - fastapi / uvicorn     : serveur API                        (Étape 1)
+#   - pydantic-settings     : lecture des variables d'environnement (Étape 1)
+#   - sqlalchemy            : accès à la base de données          (Étape 4)
+#   - psycopg               : pilote PostgreSQL                   (Étape 4)
+#   - alembic               : migrations de la base               (Étape 4)
+
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic-settings>=2.4
+sqlalchemy>=2.0.30
+psycopg[binary]>=3.2
+alembic>=1.13
+#   - paho-mqtt            : client MQTT (connexion aux kits)     (Étape 7)
+#   - amqtt                : broker MQTT de DÉVELOPPEMENT, sans Docker (Étape 7)
+paho-mqtt>=2.1
+amqtt>=0.11
+#   - reportlab            : génération du rapport PDF (fiche §16)   (Étape 12)
+reportlab>=4.2

@@ -1,0 +1,1140 @@
+/* ============================================================
+   THÈME GLOBAL — charte « OCP » (vert & blanc).
+   Couleurs extraites du logo officiel OCP Group :
+     vert profond  #2b843d   (élément principal du logo)
+     vert clair    #77b731   (dégradés du logo)
+   Le reste de la palette (surfaces, textes, états) est dérivé
+   de ces deux verts + blanc. Pour changer l'apparence de toute
+   l'application, ne modifier que les variables ci-dessous.
+   ============================================================ */
+
+:root {
+  /* Couleurs de marque OCP */
+  --c-primary: #2b843d;          /* vert OCP principal (boutons, liens) */
+  --c-primary-dark: #1f6a30;     /* survol / focus */
+  --c-primary-deeper: #175225;   /* titres, textes forts */
+  --c-primary-soft: #e9f3ec;     /* fond vert très clair (survol, sections) */
+  --c-accent: #77b731;           /* vert clair OCP (accents secondaires) */
+  --c-accent-soft: #f0f7e7;      /* fond vert clair très doux */
+
+  /* Fond et surfaces */
+  --c-bg: #f3f6f4;               /* fond général, légèrement vert-gris */
+  --c-surface: #ffffff;
+  --c-border: #d8e3da;           /* bordures vert-gris */
+
+  /* Texte */
+  --c-text: #1b2a20;
+  --c-text-muted: #5f6f64;
+
+  /* États (sémantiques : restent compréhensibles indépendamment de la marque) */
+  --c-ok: #1e7e34;
+  --c-ok-soft: #e4f3e8;
+  --c-warn: #a97b0a;
+  --c-warn-soft: #fbf1d9;
+  --c-error: #c0392b;
+  --c-error-soft: #fbeae9;
+  --c-info: #1f7a63;             /* teinte vert-bleu : « activité / kit » */
+  --c-info-soft: #e0f2ee;
+
+  /* Formulaires */
+  --c-field-border: #b7c9bb;
+  --c-focus: #2b843d;
+
+  /* Rayons et ombres */
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow-card: 0 1px 3px rgba(23, 82, 37, 0.08);
+
+  /* Dimensions sidebar */
+  --sidebar-width: 252px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+}
+
+a {
+  color: var(--c-primary);
+}
+
+/* ============================================================
+   STRUCTURE GÉNÉRALE : liseré + en-tête (sans menu) + contenu
+   ============================================================ */
+
+.app-frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.brand-strip {
+  height: 5px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, var(--c-primary) 0%, var(--c-accent) 100%);
+}
+
+/* ---------- En-tête (marque seule, pas de menu) ---------- */
+.topbar {
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* Grille 3 colonnes : la marque occupe la colonne CENTRALE (centrée),
+   le lien Accueil reste aligné à droite, la colonne gauche est vide
+   (elle rééquilibre le centrage). */
+.topbar-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+}
+
+.topbar-logo-link {
+  grid-column: 1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+}
+
+.topbar-logo {
+  height: 40px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  grid-column: 2;
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.topbar-brand-name {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--c-primary-deeper);
+}
+
+.topbar-brand-sub {
+  font-size: 0.72rem;
+  color: var(--c-text-muted);
+}
+
+/* Lien discret vers l'accueil (remplace le menu) */
+.topbar-home {
+  grid-column: 3;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.topbar-home svg {
+  width: 16px;
+  height: 16px;
+}
+
+.topbar-home:hover {
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+  border-color: var(--c-border);
+}
+
+/* ---------- Zone principale ---------- */
+.app-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 24px 56px;
+}
+
+.app-footer {
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text-muted);
+  font-size: 0.75rem;
+  padding: 12px 24px;
+  text-align: center;
+}
+
+@media (max-width: 880px) {
+  .topbar-inner {
+    padding: 8px 14px;
+    gap: 8px;
+  }
+
+  .topbar-logo {
+    height: 32px;
+  }
+
+  .topbar-brand-name {
+    font-size: 1.05rem;
+  }
+
+  .topbar-brand-sub {
+    display: none;
+  }
+
+  .content {
+    padding: 22px 14px 40px;
+  }
+}
+
+/* ============================================================
+   COMPOSANTS COMMUNS
+   ============================================================ */
+
+/* Titre de page */
+.page-title {
+  margin: 0 0 4px;
+  font-size: 1.45rem;
+  color: var(--c-primary-deeper);
+}
+
+.page-subtitle {
+  margin: 0 0 22px;
+  color: var(--c-text-muted);
+  font-size: 0.9rem;
+}
+
+/* Carte */
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.card + .card {
+  margin-top: 18px;
+}
+
+.card h2 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: var(--c-primary-deeper);
+}
+
+.card-hint {
+  margin: 0 0 14px;
+  color: var(--c-text-muted);
+  font-size: 0.85rem;
+}
+
+/* Boutons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--c-primary);
+  color: #ffffff;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--c-primary-dark);
+}
+
+.btn-accent {
+  background: var(--c-primary-deeper);
+  color: #ffffff;
+}
+.btn-accent:hover:not(:disabled) {
+  background: #123f1c;
+}
+
+.btn-outline {
+  background: var(--c-surface);
+  color: var(--c-primary);
+  border-color: var(--c-primary);
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--c-primary-soft);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--c-text-muted);
+  border-color: var(--c-border);
+}
+.btn-ghost:hover:not(:disabled) {
+  color: var(--c-text);
+  border-color: var(--c-text-muted);
+}
+
+.btn-danger {
+  background: var(--c-error);
+  color: #ffffff;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #a32b1f;
+}
+
+.btn-lg {
+  padding: 13px 26px;
+  font-size: 1rem;
+}
+
+.btn-sm {
+  padding: 5px 11px;
+  font-size: 0.8rem;
+}
+
+/* Liste d'actions boutons */
+.actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.flex-spacer {
+  flex: 1;
+}
+
+/* Badge d'état */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge-lg {
+  font-size: 0.9rem;
+  padding: 6px 16px;
+}
+
+.badge-ok { background: var(--c-ok-soft); color: var(--c-ok); }
+.badge-warn { background: var(--c-warn-soft); color: var(--c-warn); }
+.badge-danger { background: #fbeae7; color: var(--c-error); }
+.badge-error { background: var(--c-error-soft); color: var(--c-error); }
+.badge-info { background: var(--c-info-soft); color: var(--c-info); }
+.badge-neutral { background: #eef1ef; color: var(--c-text-muted); }
+
+/* Alertes / notes */
+.alert {
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  border: 1px solid transparent;
+}
+.alert-warn { background: var(--c-warn-soft); border-color: #ecdcab; color: #7a5b00; }
+.alert-error { background: var(--c-error-soft); border-color: #f0c4bf; color: var(--c-error); }
+.alert-info { background: var(--c-info-soft); border-color: #c3e0d8; color: var(--c-info); }
+
+.note {
+  font-size: 0.82rem;
+  color: var(--c-text-muted);
+  background: var(--c-accent-soft);
+  border-left: 3px solid var(--c-accent);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 0;
+}
+
+.mt-2 { margin-top: 14px; }
+
+/* Grilles utilitaires */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+@media (max-width: 900px) {
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   TABLEAUX (style « Google Sheets »)
+   ============================================================ */
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  background: var(--c-surface);
+}
+
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.87rem;
+}
+
+table.data-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f0f4f1;
+  color: var(--c-text);
+  font-weight: 600;
+  border-bottom: 1px solid var(--c-border);
+  white-space: nowrap;
+}
+
+table.data-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #e6ede8;
+  white-space: nowrap;
+}
+
+table.data-table tbody tr:hover {
+  background: var(--c-primary-soft);
+}
+
+/* Registre numérique : 17 colonnes → défilement horizontal, et avec
+   plus de 1 500 lignes l'EN-TÊTE reste ÉPINGLÉ pendant le défilement
+   vertical (demande client) : la zone de tableau défile elle-même
+   (X et Y) et les cellules d'en-tête sont collées en haut de cette
+   zone — visibles en permanence, y compris en remontant. */
+.table-scroll {
+  overflow: auto;
+  max-height: max(320px, calc(100vh - 300px));
+}
+
+/* « collapse » fait disparaître les bordures des cellules collées au
+   défilement : on passe en « separate » pour le registre. */
+table.registre-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+table.registre-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;                      /* au-dessus des cellules du corps */
+  background: #f0f4f1;             /* opaque : masque les lignes qui défilent */
+  box-shadow: inset 0 -1px 0 var(--c-border); /* bordure basse persistante */
+}
+
+/* ============================================================
+   FORMULAIRES
+   ============================================================ */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.form-group .hint {
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+}
+
+.form-group input[type='text'],
+.form-group input[type='number'],
+.form-group input[type='date'],
+.form-group input[type='datetime-local'],
+.form-group input[type='search'],
+.form-group select,
+.form-group textarea {
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--c-text);
+  padding: 8px 10px;
+  border: 1px solid var(--c-field-border);
+  border-radius: var(--radius);
+  background: var(--c-surface);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: 2px solid var(--c-focus);
+  outline-offset: -1px;
+  border-color: var(--c-focus);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Sous-section de formulaire */
+.form-section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--c-border);
+}
+
+.form-section h3 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  color: var(--c-primary-deeper);
+}
+
+/* ============================================================
+   PAGES — styles spécifiques
+   ============================================================ */
+
+/* ---------- Accueil ---------- */
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.hero .page-title { margin-bottom: 6px; }
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.card-head h2 { margin: 0; }
+
+.link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.link:hover { text-decoration: underline; }
+
+/* Liste des derniers tests */
+.recent-list { display: grid; gap: 8px; }
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  background: #fcfdfc;
+}
+.recent-item:hover { border-color: var(--c-primary); }
+
+.motor-ico {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--c-primary-soft);
+  font-size: 1.15rem;
+  color: var(--c-primary);
+  flex-shrink: 0;
+}
+
+.recent-info { flex: 1; min-width: 0; }
+.recent-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Schéma d'architecture */
+.arch-flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.arch-node {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 10px;
+  text-align: center;
+  background: var(--c-primary-soft);
+}
+.arch-node span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+}
+.arch-arrow {
+  text-align: center;
+  color: var(--c-primary);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 700px) {
+  .arch-flow { grid-template-columns: 1fr; }
+}
+
+/* ---------- Connexion kit ---------- */
+.kit-banner {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.kit-info {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px dashed var(--c-border);
+  border-radius: var(--radius);
+  background: #fcfdfc;
+}
+
+.kit-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ---------- Acquisition ---------- */
+.acq-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+
+/* ---------- View Graph : figures (Étape 9 — Recharts) ---------- */
+.figure-card .chart-box {
+  height: 280px;
+  margin-top: 4px;
+}
+
+.figure-card .card-head h2 .small {
+  font-weight: 400;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+@media (max-width: 800px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.stat-box {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  background: #fcfdfc;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ---------- Analyse ---------- */
+.diag-steps { display: grid; gap: 12px; margin-top: 6px; }
+
+.diag-step {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  background: #fcfdfc;
+  border-left: 3px solid var(--c-border);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.diag-step-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--c-text-muted);
+}
+
+.diag-value {
+  font-size: 1.25rem;
+  color: var(--c-primary-deeper);
+}
+
+.diag-ul { margin: 0; padding-left: 18px; }
+.diag-ul li + li { margin-top: 2px; }
+
+.conclusion-box {
+  border: 1px solid var(--c-primary);
+  border-radius: var(--radius);
+  background: var(--c-primary-soft);
+  padding: 14px 18px;
+  font-style: italic;
+}
+
+.decision-buttons {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.btn-ok-selected {
+  background: var(--c-ok);
+  color: #ffffff;
+  border-color: var(--c-ok);
+}
+
+.btn-danger-selected {
+  background: var(--c-error);
+  color: #ffffff;
+  border-color: var(--c-error);
+}
+
+/* ---------- Rapport ---------- */
+.report-preview { border: 2px solid var(--c-primary-deeper); }
+
+.report-masthead {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  border-bottom: 3px double var(--c-primary-deeper);
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+}
+
+.report-masthead > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: var(--c-primary);
+  flex-shrink: 0;
+}
+
+.report-title {
+  font-weight: 800;
+  color: var(--c-primary-deeper);
+  letter-spacing: 0.6px;
+}
+
+.report-grid { display: grid; gap: 10px; }
+
+/* Listes de risques / actions (connaissances client par paramètre) */
+.report-ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+
+
+.report-section {
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.report-section-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--c-primary-deeper);
+  border-bottom: 1px solid var(--c-border);
+  padding-bottom: 5px;
+  margin-bottom: 6px;
+}
+
+.report-line { font-size: 0.87rem; padding: 1px 0; }
+.decision-line { font-weight: 600; }
+
+.report-trail {
+  border-top: 1px solid var(--c-border);
+  margin-top: 16px;
+  padding-top: 10px;
+}
+
+/* ---------- Historique ---------- */
+.filters-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+  gap: 12px 14px;
+  align-items: end;
+}
+
+@media (max-width: 1000px) {
+  .filters-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.filter-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ---------- Formulaire / divers ---------- */
+.next-steps { margin: 0; padding-left: 20px; }
+.next-steps li + li { margin-top: 4px; }
+
+.auto-origin {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--c-info-soft);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+}
+
+.channel-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.channel {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  background: #fcfdfc;
+}
+
+/* ---------- Utilitaires ---------- */
+.muted { color: var(--c-text-muted); }
+.small { font-size: 0.82rem; }
+.mono { font-family: 'Consolas', 'Courier New', monospace; }
+.mt-0 { margin-top: 0; }
+.mb-0 { margin-bottom: 0; }
+
+/* ============================================================
+   PAGE ACCUEIL (§7) : zones A (derniers tests), B (historique),
+   C (boutons d'action).
+   ============================================================ */
+
+/* Bandeau d'accueil avec les deux boutons d'action (zone C) */
+.home-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  background: linear-gradient(135deg, #f4faf4, #e7f3e9);
+  border-color: #cfe3d2;
+}
+
+.home-hero-text {
+  flex: 1;
+  min-width: 260px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.cta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.cta-hint {
+  font-size: 0.76rem;
+  color: var(--c-text-muted);
+}
+
+/* État vide (aucun test enregistré) */
+.state-empty {
+  border: 1px dashed var(--c-border);
+  border-radius: var(--radius);
+  padding: 18px;
+  background: #fbfdfb;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Carte avec titre + lien en tête de carte */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.card-head h2 {
+  margin: 0;
+}
+
+.link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   ÉTAPE 5 — formulaire branché sur l'API
+   ============================================================ */
+
+/* Alerte de succès (test enregistré) */
+.alert-success {
+  background: var(--c-ok-soft);
+  border-color: #bfe0c8;
+  color: var(--c-ok);
+}
+
+/* Ligne « ID moteur + bouton Récupérer » */
+.lookup-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.lookup-input {
+  flex: 0 1 320px;
+}
+
+.required-star {
+  color: var(--c-error);
+}
+
+/* Sous-titre de récapitulatif */
+.summary-h {
+  margin: 18px 0 8px;
+  font-size: 0.9rem;
+  color: var(--c-primary-deeper);
+}
+
+/* ============================================================
+   ÉTAPE 6 — historique
+   ============================================================ */
+
+/* Ligne archivée : atténuée (reste lisible, traçabilité) */
+tr.row-archived td {
+  color: var(--c-text-muted);
+  background: #f6f8f6;
+}
+
+tr.row-archived td strong {
+  color: var(--c-text-muted);
+}
+
+/* ============================================================
+   ÉTAPE 7 — connexion au kit (temps réel)
+   ============================================================ */
+
+.kit-selected {
+  border: 1px solid var(--c-ok);
+  background: var(--c-ok-soft);
+}
+
+/* Liste des kits détectés */
+.kit-device-list {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+
+.kit-device {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  background: #fcfdfc;
+  flex-wrap: wrap;
+}
+
+.kit-device:hover {
+  border-color: var(--c-primary);
+}
+
+.kit-device-selected {
+  border-color: var(--c-primary);
+  background: var(--c-primary-soft);
+}
+
+.kit-device-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Bloc de commande (aide développement) */
+.code-block {
+  background: #14281a;
+  color: #cde9d3;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 0.85rem;
+  overflow-x: auto;
+  margin: 0 0 12px;
+}
+
+/* ============================================================
+   ÉTAPE 8 — acquisition automatique
+   ============================================================ */
+
+.live-values {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 0.85rem;
+  background: var(--c-accent-soft);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* Liens « désactivés » par aria-disabled (boutons de navigation) */
+.btn[aria-disabled='true'] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* É17 — boutons radio côte à côte (continuité Oui/Non) */
+.radio-row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.radio-option input {
+  width: 1.1rem;
+  height: 1.1rem;
+  cursor: pointer;
+}
+
+/* É17 — actions du parcours sous les formulaires (Test / Registre,
+   Valider le test) : boutons grands avec leur aide contextuelle */
+.home-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  margin: 1.2rem 0 1.5rem;
+}
+
+/* É17 — répartition demandée par le client : « Registre » à gauche,
+   « Test » à droite (les deux groupes occupent toute la largeur) */
+.home-actions-split {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* É17 — kit connecté : état VISIBLE (vert OCP, jamais grisé) */
+.btn-connected {
+  background: var(--c-ok);
+  border-color: var(--c-ok);
+  color: #fff;
+}

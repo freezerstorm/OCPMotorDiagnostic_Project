@@ -1,0 +1,30 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# --- Variables d'environnement (jamais versionnées : contiennent des secrets) ---
+.env
+.env.local
+*.env
+
+# --- Node.js / React ---
+node_modules/
+dist/
+*.local
+
+# --- Fichiers locaux Docker ---
+infra/mosquitto/data/
+
+# --- IDE / système ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# --- Divers ---
+*.log
