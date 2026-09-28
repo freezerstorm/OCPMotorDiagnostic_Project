@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Télécharger le projet — Diagnostic Moteurs</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f4f6f4; margin: 0;
+           display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .card { background: #fff; border: 2px solid #1a5c3a; border-radius: 12px;
+            padding: 28px; max-width: 680px; width: 94%; }
+    h1 { color: #1a5c3a; font-size: 21px; margin-top: 0; }
+    h2 { color: #1a5c3a; font-size: 16px; margin-bottom: 6px; }
+    p { color: #444; font-size: 14px; }
+    a.btn { display: block; text-align: center; padding: 14px; margin: 12px 0;
+            border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; }
+    a.main { background: #1a5c3a; color: #fff; }
+    a.alt { background: #eef3ef; color: #1a5c3a; border: 1px solid #1a5c3a; }
+    .lien-zone { display: flex; gap: 8px; margin: 8px 0 4px; }
+    .lien-zone input { flex: 1; padding: 10px; border: 1px solid #bbb; border-radius: 6px;
+                       font-size: 13px; color: #1a5c3a; }
+    .lien-zone button { padding: 10px 16px; border: none; border-radius: 6px;
+                        background: #1a5c3a; color: #fff; font-weight: bold; cursor: pointer; }
+    .ok { color: #1a5c3a; font-weight: bold; display: none; font-size: 14px; }
+    details { margin-top: 14px; border: 1px solid #d5dcd6; border-radius: 8px; padding: 10px 14px;
+              background: #fafbfa; }
+    summary { cursor: pointer; font-weight: bold; color: #1a5c3a; font-size: 15px; }
+    textarea { width: 98%; height: 110px; font-family: monospace; font-size: 10px;
+               border: 1px solid #ccc; border-radius: 6px; }
+    code { background: #eef3ef; padding: 2px 5px; border-radius: 4px; font-size: 12px; }
+    .note { font-size: 12px; color: #777; }
+    .etapes { font-size: 13px; color: #444; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>📦 Télécharger le projet complet</h1>
+
+    <h2>Méthode 1 — le lien dans un nouvel onglet</h2>
+    <p>L'aperçu est protégé par un jeton : le lien ci-dessous reprend
+       <strong>l'autorisation de votre aperçu</strong>. Copiez-le, ouvrez un
+       <strong>nouvel onglet</strong>, collez, Entrée.</p>
+    <div class="lien-zone">
+      <input id="lien" readonly />
+      <button id="copier" type="button">Copier</button>
+    </div>
+    <p class="ok" id="copie-ok">✓ Lien copié ! Collez-le dans un nouvel onglet et appuyez sur Entrée.</p>
+
+    <h2>Méthode 2 — clic droit</h2>
+    <p><strong>Clic droit</strong> sur le bouton ci-dessous →
+       <strong>« Enregistrer le lien sous… »</strong> (ça ne quitte pas la page).</p>
+    <a class="btn main" id="btn-zip" href="/archive.zip">⬇️ archive.zip (projet complet — 1,4 Mo)</a>
+    <a class="btn alt" id="btn-patch" href="/patch_etapes_3_a_19.patch">🩹 patch_etapes_3_a_19.patch (rechange)</a>
+
+    <details id="secours">
+      <summary>🛟 Méthode 3 (secours) — sans nouvel onglet : copier-coller</summary>
+      <p class="etapes">1. Cliquez : <button id="b64" type="button"
+         style="padding:8px 12px;background:#1a5c3a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">
+         Préparer le texte base64</button> (patiente ~5 s)<br />
+         2. Dans le cadre noir apparu : <strong>Ctrl+A</strong> puis <strong>Ctrl+C</strong><br />
+         3. Ouvrez le <strong>Bloc-notes</strong> → collez (Ctrl+V) → Enregistrer sous
+         <code>archive.b64</code><br />
+         4. Ouvrez <code>cmd</code> dans le dossier du fichier et tapez :<br />
+         <code>certutil -decode archive.b64 archive.zip</code> → vous obtenez archive.zip ✓</p>
+      <textarea id="b64-out" placeholder="Le texte base64 apparaîtra ici…" spellcheck="false"></textarea>
+      <p class="note" id="b64-note"></p>
+    </details>
+
+    <p class="note">archive.zip = 136 fichiers + historique Git + patch.
+       <em>node_modules</em> et <em>.env</em> non inclus (recréables).</p>
+  </div>
+
+  <script>
+    // L'URL de l'aperçu porte l'autorisation (paramètres + cookies du domaine) :
+    // le lien reproduit EXACTEMENT l'origine ET les paramètres de la page.
+    var lienComplet = window.location.origin + '/archive.zip' + window.location.search;
+    document.getElementById('lien').value = lienComplet;
+    document.getElementById('btn-zip').href = lienComplet;
+    document.getElementById('btn-patch').href =
+      window.location.origin + '/patch_etapes_3_a_19.patch' + window.location.search;
+
+    document.getElementById('copier').addEventListener('click', function () {
+      var champ = document.getElementById('lien');
+      var fait = function () {
+        document.getElementById('copie-ok').style.display = 'block';
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(champ.value).then(fait).catch(function () {
+          champ.select(); document.execCommand('copy'); fait();
+        });
+      } else {
+        champ.select(); document.execCommand('copy'); fait();
+      }
+    });
+
+    // Secours : l'archive en base64 — la copie de TEXTE n'est jamais bloquée.
+    document.getElementById('b64').addEventListener('click', function () {
+      var bouton = this;
+      bouton.disabled = true;
+      bouton.textContent = 'Chargement…';
+      fetch('/archive.zip' + window.location.search)
+        .then(function (r) { return r.blob(); })
+        .then(function (blob) {
+          var fr = new FileReader();
+          fr.onload = function () {
+            var b64 = fr.result.split(',')[1];
+            document.getElementById('b64-out').value = b64;
+            document.getElementById('b64-note').textContent =
+              'Texte prêt (' + Math.round(b64.length / 1024) + ' Ko) : Ctrl+A puis Ctrl+C.';
+            bouton.textContent = 'Préparer le texte base64';
+            bouton.disabled = false;
+          };
+          fr.readAsDataURL(blob);
+        })
+        .catch(function (e) {
+          document.getElementById('b64-note').textContent = 'Erreur : ' + e;
+          bouton.disabled = false;
+          bouton.textContent = 'Réessayer';
+        });
+    });
+  </script>
+</body>
+</html>

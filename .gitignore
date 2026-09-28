@@ -28,3 +28,7 @@ Thumbs.db
 
 # --- Divers ---
 *.log
+archive.zip
+patch_etapes_3_a_19.patch
+frontend/public/archive.zip
+frontend/public/patch_etapes_3_a_19.patch

@@ -8,8 +8,8 @@
 //   START  cliquable UNIQUEMENT si le kit est réellement connecté ;
 //   QUIT   arrête l'acquisition (les mesures déjà reçues sont gardées) ;
 //   VIEW GRAPH  pendant et après l'acquisition ;
-//   ANALYSIS    après l'acquisition ;
-//   REPORT      quand les données nécessaires sont présentes.
+//   ANALYSIS    après l'acquisition (le rapport se consulte depuis
+//               l'ANALYSE — E4 : pas de lien REPORT ici).
 //
 // Arrivée : /test/automatique/acquisition?testId=…&kitId=…
 // Les événements temps réel (échantillons, fin, erreur) arrivent par
@@ -74,7 +74,7 @@ export default function AcquisitionPage() {
   // IMPORTANT : les états ACQUIRING et surtout COMPLETED / ERROR sont
   // GELÉS. Un état final ne doit JAMAIS être écrasé automatiquement par
   // cet effet, sinon le résultat de l'acquisition (badge, message et
-  // activation de Analysis/Report) disparaîtrait aussitôt affiché.
+  // activation de Analysis) disparaîtrait aussitôt affiché.
   useEffect(() => {
     setUiState((current) => {
       if (
@@ -346,14 +346,9 @@ export default function AcquisitionPage() {
           >
             Analysis
           </Link>
-          {/* REPORT : quand les données nécessaires sont présentes */}
-          <Link
-            className="btn btn-outline"
-            to={testId ? `/test/rapport?testId=${testId}` : '/test/rapport'}
-            aria-disabled={!finished}
-          >
-            Report
-          </Link>
+          {/* PAS de lien REPORT ici (E4, décision client) : le rapport
+              est accessible uniquement depuis l'ANALYSE (§8, §18) et
+              l'Historique. */}
         </div>
 
         {/* Complément OBLIGATOIRE : tension d'alimentation + VALIDER LE TEST.
