@@ -7,7 +7,7 @@ créer un module + l'inclure ici.
 
 from fastapi import APIRouter
 
-from app.api import acquisition, analysis, kits, motors, registre, report, tests
+from app.api import acquisition, analysis, kits, motors, registre, report, services, tests
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(motors.router)
@@ -17,3 +17,4 @@ api_router.include_router(acquisition.router)
 api_router.include_router(analysis.router)
 api_router.include_router(report.router)
 api_router.include_router(registre.router)
+api_router.include_router(services.router)

@@ -53,17 +53,25 @@ export const TEST_STATUS_LABELS = {
 // Seules ces quatre valeurs sont admises (formulaire + validation API).
 export const INSULATION_TEST_VOLTAGES = [500, 1000, 2500, 5000];
 
-// Environnements de fonctionnement (ateliers) — la liste reste
-// modifiable ici. Ces libellés correspondent à la base de connaissances
-// environnementales du backend
-// (backend/diagnostic_rules/environment_knowledge.py) : l'analyse
-// environnementale de la page Analyse s'appuie dessus.
-export const SERVICE_OPTIONS = [
-  'Mine à ciel ouvert',
-  'Concassage / Criblage',
-  'Laverie / Lavage / Décantation',
-  'Flottation',
-  'Sécherie / Fours rotatifs',
-  'Station de tête du Slurry Pipeline',
-  'Parc de stockage et reprise',
+// NB — la liste des SERVICES n'est plus définie ici : elle vient du
+// catalogue en base (GET /api/v1/services, migration 0011 : 22
+// désignations OCP officielles + désignations ajoutées par les
+// techniciens). Le contexte environnemental utilisé par l'analyse vit
+// dans backend/diagnostic_rules/environment_knowledge.py.
+
+// --- Rapport PDF : informations supplémentaires sélectionnables ---
+// La fiche OCP est toujours complète dans le PDF ; ces éléments
+// (issus de l'ANALYSE) ne s'y ajoutent que si le technicien les coche
+// sur la page Analyse. Tous décochés par défaut SAUF « verdicts »
+// (verdict de chaque règle, coché par défaut — décision 28/09/2026).
+export const REPORT_PDF_OPTIONS = [
+  { key: 'verdicts', label: 'Verdict de chaque règle (CONFORME / NON CRITIQUE / PROBLÉMATIQUE / NON ÉVALUABLE)' },
+  { key: 'interpretations', label: 'Interprétation de chaque règle' },
+  { key: 'risques', label: 'Risques / causes possibles (règles en défaut)' },
+  { key: 'recommandations', label: 'Actions recommandées (règles en défaut)' },
+  { key: 'sources', label: 'Source de chaque mesure (fiche ou kit)' },
+  { key: 'synthese', label: 'Synthèse du diagnostic (comptage par évaluation)' },
+  { key: 'conclusion', label: 'Conclusion générale automatique' },
+  { key: 'env_hypotheses', label: 'Environnement — hypothèses de causes et contrôles recommandés' },
+  { key: 'env_service', label: 'Environnement — fiche du service (description, contraintes, paramètres sensibles)' },
 ];

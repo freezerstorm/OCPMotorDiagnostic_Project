@@ -1138,3 +1138,95 @@ tr.row-archived td strong {
   border-color: var(--c-ok);
   color: #fff;
 }
+
+/* ============================================================
+   CHAMP « SERVICE » (combobox : choisir OU créer, un seul champ)
+   ============================================================ */
+.combobox {
+  position: relative;
+}
+
+.combobox-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 18px rgba(23, 82, 37, 0.14);
+  max-height: 264px;
+  overflow-y: auto;
+}
+
+.combobox-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.combobox-item:hover,
+.combobox-item.is-active {
+  background: var(--c-primary-soft);
+}
+
+.combobox-add {
+  font-weight: 600;
+  color: var(--c-primary-dark);
+  border-top: 1px solid var(--c-border);
+  margin-top: 4px;
+  border-radius: 0 0 6px 6px;
+}
+
+.combobox-empty {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  color: var(--c-text-muted);
+}
+
+/* ============================================================
+   REGISTRE — cellule d'une mesure signalée par les règles du
+   test (courant, résistances, isolement PH_PH / PH_m).
+   ============================================================ */
+.data-table td.cell-critique {
+  background: var(--c-error-soft);
+  color: var(--c-error);
+  font-weight: 600;
+}
+
+/* ============================================================
+   RAPPORT PDF — cases « informations supplémentaires » (Analyse)
+   ============================================================ */
+.pdf-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 6px 18px;
+}
+
+.pdf-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--c-text);
+  cursor: pointer;
+}
+
+.pdf-option input[type='checkbox'] {
+  margin-top: 3px;
+  accent-color: var(--c-primary);
+  width: 15px;
+  height: 15px;
+}

@@ -210,8 +210,71 @@ def _footer(canvas, doc) -> None:
     canvas.restoreState()
 
 
-def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
-    """Construit la FICHE D'ESSAI MOTEUR PDF et renvoie les octets."""
+# ------------------------------------------------------------------
+# OPTIONS DU RAPPORT (décision client 28/09/2026) :
+#   - la FICHE OCP est TOUJOURS complète (sections 1 à 6, observation,
+#     zone administrative, décision) ;
+#   - les informations SUPPLÉMENTAIRES issues de l'ANALYSE ne figurent
+#     dans le PDF que si le technicien les coche sur la page Analyse
+#     (options transmises en paramètre, décochées par défaut).
+# ------------------------------------------------------------------
+PDF_OPTIONS = {
+    "verdicts": "Verdict de chaque règle (CONFORME / NON CRITIQUE / PROBLÉMATIQUE / NON ÉVALUABLE)",
+    "interpretations": "Interprétation de chaque règle",
+    "risques": "Risques / causes possibles (règles en défaut)",
+    "recommandations": "Actions recommandées (règles en défaut)",
+    "sources": "Source de chaque mesure (fiche ou kit)",
+    "synthese": "Synthèse du diagnostic (comptage par évaluation)",
+    "conclusion": "Conclusion générale automatique",
+    "env_hypotheses": "Environnement — hypothèses de causes et contrôles recommandés",
+    "env_service": "Environnement — fiche du service (description, contraintes, paramètres sensibles)",
+}
+
+
+def parse_pdf_options(opts: str | None) -> set[str]:
+    """« a,b,c » → sous-ensemble des options valides (inconnues ignorées)."""
+    if not opts:
+        return set()
+    return {o.strip() for o in opts.split(",") if o.strip() in PDF_OPTIONS}
+
+
+def build_report_pdf(test, samples: list[dict], analysis: dict,
+                     options: set[str] | None = None) -> bytes:
+    """Construit la FICHE D'ESSAI MOTEUR PDF et renvoie les octets.
+
+    `options` : informations supplémentaires de l'analyse cochées par
+    le technicien (voir PDF_OPTIONS) — vide = fiche OCP seule.
+    """
+    options = options or set()
+    # Compteur de sections : la numérotation s'adapte aux options.
+    num = {"n": 0}
+
+    def _next() -> int:
+        num["n"] += 1
+        return num["n"]
+
+    def _ligne(label: str, valeur) -> None:
+        """Ligne « label : texte » (rien si la valeur est vide/None)."""
+        if valeur is None or valeur == "" or valeur == []:
+            return
+        if isinstance(valeur, (list, tuple)):
+            valeur = " ; ".join(str(v) for v in valeur)
+        story.append(Paragraph(f"<b>{label} :</b> {valeur}", styles["line"]))
+
+    def _lignes_regle(result: dict | None) -> None:
+        """Lignes SUPPLÉMENTAIRES d'UNE règle, selon les cases cochées."""
+        if result is None:
+            return
+        if "sources" in options:
+            _ligne("Source de la mesure", result.get("measured_source"))
+        if "verdicts" in options:
+            _ligne("Évaluation", result.get("evaluation_label"))
+        if "interpretations" in options:
+            _ligne("Interprétation", result.get("interpretation"))
+        if "risques" in options:
+            _ligne("Risques / causes possibles", result.get("risk"))
+        if "recommandations" in options:
+            _ligne("Actions recommandées", result.get("recommendation"))
     motor = test.motor
     m = test.measurements
     styles = _styles()
@@ -255,7 +318,7 @@ def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
     ]
 
     # ===== 1. Identification du moteur =====
-    _section(story, 1, "Identification du moteur", styles)
+    _section(story, _next(), "Identification du moteur", styles)
     story.append(_kv_table([
         ("Matériel / Désignation", _v(motor.designation if motor else None)),
         ("Matricule", _v((motor.matricule if motor else None) or (motor.motor_id if motor else None))),
@@ -267,12 +330,12 @@ def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
         ("Vitesse N (plaque)", _v(motor.rated_speed_rpm if motor else None, " tr/min")),
         ("Cos φ", _v(motor.cos_phi if motor else None)),
         ("Couplage", _v(motor.coupling if motor else None)),
-        ("Service / Environnement", _v(motor.service if motor else None)),
+        ("Service", _v(motor.service if motor else None)),
         ("DI / OT", _v(motor.di_ot if motor else None)),
     ]))
 
     # ===== 2. Mesure d'isolement =====
-    _section(story, 2, "Mesure d'isolement", styles)
+    _section(story, _next(), "Mesure d'isolement", styles)
     insulation = _result_by_parameter(analysis, "insulation")
     ref_meter_iso = m.ref_meter_insulation if m else None
     story.append(Paragraph(
@@ -296,9 +359,10 @@ def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
             obs = "non mesurée"
         iso_rows.append((label, value, "MΩ", ref, obs))
     story.append(_measure_table(iso_rows))
+    _lignes_regle(insulation)
 
     # ===== 3. Mesure des résistances =====
-    _section(story, 3, "Mesure des résistances", styles)
+    _section(story, _next(), "Mesure des résistances", styles)
     winding = _result_by_parameter(analysis, "winding_resistance")
     story.append(Paragraph(
         f"<b>Réf. appareil de mesure :</b> {_v(m.ref_meter_resistance if m else None)}",
@@ -314,6 +378,7 @@ def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
         ("R31", _v(m.r31_ohm if m else None, " Ω"), "Ω", "—", ""),
     ]
     story.append(_measure_table(wind_rows))
+    _lignes_regle(winding)
     story.append(Spacer(1, 1.5 * mm))
     continuity_text = "—"
     if m is not None and m.continuity_ok is not None:
@@ -324,7 +389,7 @@ def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
         styles["line"]))
 
     # ===== 4. Mesure tension / courant =====
-    _section(story, 4, "Mesure tension / courant", styles)
+    _section(story, _next(), "Mesure tension / courant", styles)
     current = _result_by_parameter(analysis, "current_no_load")
     story.append(Paragraph(
         f"<b>Réf. appareil (pince tension/courant) :</b> {_v(m.ref_meter_cl if m else None)}   ·   "
@@ -344,9 +409,10 @@ def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
     story.append(_measure_table([
         ("Courant à vide I0", _v(m.current_a if m else None, " A"), "A", i0_ref, i0_obs),
     ]))
+    _lignes_regle(current)
 
     # ===== 5. Mesure température (paliers) =====
-    _section(story, 5, "Mesure température (paliers)", styles)
+    _section(story, _next(), "Mesure température (paliers)", styles)
     story.append(Paragraph(
         f"<b>Réf. appareil (température) :</b> {_v(m.ref_meter_temperature if m else None)}   ·   "
         f"<b>Limite par palier :</b> &lt; 70 °C",
@@ -366,9 +432,10 @@ def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
             _v(m.temperature_c, " °C"), "°C", "&lt; 85", legacy_obs,
         ))
     story.append(_measure_table(temp_rows))
+    _lignes_regle(temperature)
 
-    # ===== 6. Vibration =====
-    _section(story, 6, "Vibration", styles)
+    # ===== Vibration =====
+    _section(story, _next(), "Vibration", styles)
     if samples:
         duration = samples[-1]["t_s"] - samples[0]["t_s"]
         extra = f" — acquisition kit : {len(samples)} échantillons sur {duration:.1f} s"
@@ -378,13 +445,76 @@ def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
         ("Vibration", _v(m.vibration_mm_s if m else None, " mm/s"), "mm/s",
          "—", "enregistrée (règle non définie à ce jour)" + extra),
     ]))
+    _lignes_regle(_result_by_parameter(analysis, "vibration"))
 
-    # ===== 7. Observation du technicien =====
-    _section(story, 7, "Observation du technicien", styles)
+    # ===== Synthèse et Conclusion (informations supplémentaires cochées) =====
+    if "synthese" in options:
+        _section(story, _next(), "Synthèse du diagnostic", styles)
+        s = analysis.get("summary") or {}
+        parts = [
+            f"{s[key]} {libelle}"
+            for key, libelle in (
+                ("conforme", "conforme(s)"), ("non_critique", "non critique(s)"),
+                ("problematique", "problématique(s)"), ("critique", "critique(s)"),
+                ("non_evaluable", "non évaluable(s)"),
+            ) if s.get(key)
+        ]
+        story.append(Paragraph(
+            " · ".join(parts) if parts else "Aucune règle n'a pu être évaluée.",
+            styles["line"]))
+    if "conclusion" in options:
+        _section(story, _next(), "Conclusion générale", styles)
+        for paragraphe in analysis.get("general_conclusion") or []:
+            story.append(Paragraph(paragraphe, styles["line"]))
+            story.append(Spacer(1, 1 * mm))
+
+    # ===== Contexte environnemental (SEULEMENT si le technicien l'a coché) =====
+    # Hypothèses SEULEMENT pour les anomalies réellement détectées (aucun
+    # seuil nouveau : les évaluations viennent des règles existantes).
+    env = analysis.get("environment_analysis") or {}
+    if "env_service" in options or "env_hypotheses" in options:
+        _section(story, _next(), "Contexte environnemental", styles)
+        if not env.get("known"):
+            story.append(Paragraph(
+                env.get("message") or "Service non renseigné.", styles["line"]))
+        else:
+            if "env_service" in options:
+                story.append(_kv_table([
+                    ("Service", _v(env.get("environment"))),
+                    ("Désignation", _v(env.get("description"))),
+                ]))
+                _ligne("Contraintes environnementales", env.get("constraints"))
+                params = [param["label"] for param in env.get("relevant_parameters", [])]
+                _ligne("Paramètres particulièrement sensibles",
+                       " · ".join(params) if params else None)
+            triggered = env.get("triggered") or []
+            if "env_hypotheses" in options:
+                if triggered:
+                    for entry in triggered:
+                        causes = " ; ".join(entry["possible_causes"])
+                        recs = " ; ".join(entry["recommendations"])
+                        story.append(Spacer(1, 1.5 * mm))
+                        story.append(Paragraph(
+                            f"<b>{entry['parameter_label']}</b> — anomalie détectée "
+                            f"({entry['result_label']}). Causes possibles à investiguer : {causes}.",
+                            styles["line"],
+                        ))
+                        story.append(Paragraph(f"Contrôles recommandés : {recs}.", styles["line"]))
+                    story.append(Spacer(1, 1.5 * mm))
+                    story.append(Paragraph(
+                        "Hypothèses contextualisées : l'environnement n'est jamais la cause "
+                        "certaine d'une anomalie (à vérifier sur l'équipement).",
+                        styles["muted"]))
+                else:
+                    note = env.get("watch_note") or "Aucune hypothèse environnementale déclenchée sur ce test."
+                    story.append(Paragraph(note, styles["line"]))
+
+    # ===== Observation du technicien =====
+    _section(story, _next(), "Observation du technicien", styles)
     story.append(Paragraph(test.observation or "—", styles["line"]))
 
-    # ===== 8. Zone administrative (fiche papier) =====
-    _section(story, 8, "Zone administrative", styles)
+    # ===== Zone administrative (fiche papier) =====
+    _section(story, _next(), "Zone administrative", styles)
     story.append(_kv_table([
         ("Sce demandeur", _v(test.requested_by_service)),
         ("AVIS", _v(test.notice)),
@@ -397,8 +527,8 @@ def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
          "—" if test.repair_external is None else ("Oui" if test.repair_external else "Non")),
     ]))
 
-    # ===== 9. Équipement conforme + décision finale =====
-    _section(story, 9, "Équipement conforme / Décision finale", styles)
+    # ===== Équipement conforme + décision finale =====
+    _section(story, _next(), "Équipement conforme / Décision finale", styles)
     oui = "X" if test.decision == "serviced" else " "
     non = "X" if test.decision == "repair" else " "
     decision_line = _DECISION_LABELS.get(test.decision) if test.decision else "Non enregistrée à ce jour."
@@ -411,9 +541,8 @@ def build_report_pdf(test, samples: list[dict], analysis: dict) -> bytes:
     ]))
     story.append(Spacer(1, 2 * mm))
     story.append(Paragraph(
-        "L'interprétation détaillée (causes possibles, risques, recommandations) figure "
-        "sur la page ANALYSE de l'application — le présent rapport fait foi sur les "
-        "valeurs mesurées et leurs évaluations de règles.",
+        "L'interprétation détaillée figure sur la page ANALYSE de l'application — "
+        "le présent rapport fait foi sur les valeurs mesurées et leurs évaluations de règles.",
         styles["muted"]))
 
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)

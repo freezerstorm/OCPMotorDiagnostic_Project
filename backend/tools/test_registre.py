@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.services.registre import (  # noqa: E402
     _fmt_num,
     _glued,
+    cellules_critiques_du_test,
     entry_values_from_test,
 )
 
@@ -90,9 +91,12 @@ check("5. Un = « 500V »", v["un_v"] == "500V", v["un_v"])
 check("6. In = « 78A »", v["in_a"] == "78A", v["in_a"])
 check("7. U0 vide (non capturée)", v["uo_v"] is None)
 check("8. I0 = courant de la fiche « 41A »", v["io_a"] == "41A", v["io_a"])
-check("9. Isolement = mesures Ph/N jointes",
-      v["isolement"] == "Ph/N : 310 / 298 / 305 MΩ ; Ph/Ph : 145 / 138 / 141 MΩ",
-      v["isolement"])
+check("9. PH_PH = isolements entre phases (Ph1-Ph2/Ph2-Ph3/Ph3-Ph1)",
+      v["isolement"] == "145 / 138 / 141 MΩ", v["isolement"])
+check("9b. PH_m = isolements phase-masse (Ph1-M/Ph2-M/Ph3-M)",
+      v["isolement_ph_m"] == "310 / 298 / 305 MΩ", v["isolement_ph_m"])
+check("9c. R = résistances des enroulements (R12/R23/R31)",
+      v["r"] == "0,152 / 0,152 / 0,153 Ω", v["r"])
 check("10. Nature = désignation du moteur", v["nature"] == "Pompe eau process")
 check("11. Puissance = « 45 kW »", v["puissance"] == "45 kW", v["puissance"])
 check("12. Société vide (non capturée)", v["societe"] is None)
@@ -112,7 +116,8 @@ check("Matricule → ID moteur (seul identifiant disponible)", v2["matricule"] =
 check("DI/OT vide", v2["di_ot"] is None)
 check("Un/In vides", v2["un_v"] is None and v2["in_a"] is None)
 check("I0 = moyenne des échantillons kit", v2["io_a"] == "11A", v2["io_a"])
-check("Isolement vide", v2["isolement"] is None)
+check("PH_PH / PH_m / R vides (pas de mesures)",
+      v2["isolement"] is None and v2["isolement_ph_m"] is None and v2["r"] is None)
 check("Nature vide si moteur sans désignation", v2["nature"] is None)
 check("Puissance vide", v2["puissance"] is None)
 check("Observation vide", v2["observation"] is None)
@@ -134,6 +139,60 @@ check("société « FAR » saisie → colonne Société « FAR »",
 # Les autres colonnes restent intactes
 check("les autres colonnes inchangées (Un « 500V », observation)",
       valeurs["un_v"] == "500V" and "observation" in valeurs, valeurs["un_v"])
+
+print("\n=== Cellules en défaut (rouge du registre, décision 28/09/2026) ===")
+
+
+def result_factice(parameter, evaluation):
+    return {"parameter": parameter, "evaluation": evaluation}
+
+
+def analyse_factice(results, iso_items=None):
+    if iso_items is not None:
+        results = [dict(r, items=iso_items) if r["parameter"] == "insulation" else r
+                   for r in results]
+    return {"results": results}
+
+
+def iso_items(ph_ph_eval, ph_m_eval):
+    return [
+        {"key": "ph1_ph2", "evaluation": ph_ph_eval},
+        {"key": "ph2_ph3", "evaluation": "conforme"},
+        {"key": "ph3_ph1", "evaluation": "conforme"},
+        {"key": "ph1_ground", "evaluation": ph_m_eval},
+        {"key": "ph2_ground", "evaluation": "conforme"},
+        {"key": "ph3_ground", "evaluation": "conforme"},
+    ]
+
+
+check("isolement ph-m en défaut → PH_m rouge SEULEMENT",
+      cellules_critiques_du_test(analyse_factice(
+          [result_factice("insulation", "problematique")],
+          iso_items("conforme", "problematique"))) == ["isolement_ph_m"])
+check("isolement ph-ph en défaut → PH_PH rouge SEULEMENT",
+      cellules_critiques_du_test(analyse_factice(
+          [result_factice("insulation", "problematique")],
+          iso_items("problematique", "conforme"))) == ["isolement"])
+check("isolement conforme → aucune cellule rouge",
+      cellules_critiques_du_test(analyse_factice(
+          [result_factice("insulation", "conforme")],
+          iso_items("conforme", "conforme"))) == [])
+check("courant hors tolérance → I0 rouge",
+      cellules_critiques_du_test(analyse_factice(
+          [result_factice("current_no_load", "problematique")])) == ["io_a"])
+check("résistances différentes → R rouge",
+      cellules_critiques_du_test(analyse_factice(
+          [result_factice("winding_resistance", "problematique")])) == ["r"])
+check("évaluation critique → cellule rouge aussi",
+      cellules_critiques_du_test(analyse_factice(
+          [result_factice("current_no_load", "critique")])) == ["io_a"])
+check("tout en défaut → 4 cellules rouges",
+      cellules_critiques_du_test(analyse_factice(
+          [result_factice("current_no_load", "problematique"),
+           result_factice("winding_resistance", "problematique"),
+           result_factice("insulation", "problematique")],
+          iso_items("problematique", "problematique")))
+      == ["io_a", "r", "isolement", "isolement_ph_m"])
 
 print()
 if failures:

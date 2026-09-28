@@ -14,9 +14,10 @@
 // ============================================================
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { DECISIONS, DECISION_LABELS, TEST_MODE_LABELS } from '../constants';
+import { DECISIONS, DECISION_LABELS, REPORT_PDF_OPTIONS, TEST_MODE_LABELS } from '../constants';
 import { fetchAnalysis, fetchTest, updateTest } from '../services/api';
 import { formatDateFr } from '../utils/format';
+import { getReportOptions, setReportOptions } from '../utils/reportOptions';
 
 // Évaluation (code machine) → teinte du badge.
 const EVALUATION_TONES = {
@@ -161,6 +162,9 @@ function ParameterCard({ result }) {
 // ===== Vue principale : fiche + analyse des règles =====
 function TestAnalysisView({ testId, justSaved }) {
   const [state, setState] = useState({ status: 'loading', test: null, analysis: null });
+  // Cases « Rapport PDF — informations supplémentaires » : préférence
+  // du technicien, retenue sur ce poste (décision client 28/09/2026).
+  const [pdfOptions, setPdfOptions] = useState(getReportOptions);
 
   const load = () => {
     setState({ status: 'loading', test: null, analysis: null });
@@ -326,6 +330,9 @@ function TestAnalysisView({ testId, justSaved }) {
                 <span className="badge-dot" aria-hidden="true" />Base de connaissances
               </span>
             </div>
+            {analysis.environment_analysis.description && (
+              <p className="card-hint">{analysis.environment_analysis.description}</p>
+            )}
             <div className="diag-steps">
               <div className="diag-step">
                 <span className="diag-step-label">Principaux risques associés</span>
@@ -369,6 +376,39 @@ function TestAnalysisView({ testId, justSaved }) {
         {(analysis.general_conclusion ?? []).map((paragraph, i) => (
           <div className="conclusion-box" key={i}>{paragraph}</div>
         ))}
+      </section>
+
+      {/* ===== C2. Contenu du rapport PDF (décision client 28/09/2026) =====
+          La fiche OCP est TOUJOURS complète dans le PDF ; le technicien
+          choisit ici les informations supplémentaires (issues de cette
+          analyse) qui s'y ajoutent — décochées par défaut. */}
+      <section className="card">
+        <h2>Rapport PDF — informations supplémentaires</h2>
+        <p className="card-hint">
+          Le rapport contient toujours toute la fiche OCP. Le verdict de
+          chaque règle est coché par défaut (il complète la colonne
+          « Observation » des tableaux de mesures) ; coche ce que tu veux
+          ajouter en plus. Les choix sont retenus sur ce poste et
+          s'appliquent à l'aperçu et au téléchargement du PDF.
+        </p>
+        <div className="pdf-options">
+          {REPORT_PDF_OPTIONS.map(({ key, label }) => (
+            <label key={key} className="pdf-option">
+              <input
+                type="checkbox"
+                checked={pdfOptions.includes(key)}
+                onChange={(event) => {
+                  const next = event.target.checked
+                    ? [...pdfOptions, key]
+                    : pdfOptions.filter((k) => k !== key);
+                  setPdfOptions(next);
+                  setReportOptions(next);
+                }}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
       </section>
 
       {/* ===== 4. Décision du technicien (inchangée, indépendante) ===== */}

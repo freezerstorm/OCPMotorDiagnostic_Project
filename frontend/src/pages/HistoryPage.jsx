@@ -23,7 +23,6 @@ import DecisionBadge from '../components/DecisionBadge';
 import {
   DECISIONS,
   DECISION_LABELS,
-  SERVICE_OPTIONS,
   TEST_MODES,
   TEST_MODE_LABELS,
 } from '../constants';
@@ -88,6 +87,13 @@ export default function HistoryPage() {
     }
   };
 
+  // Options du filtre « Service » = services réellement utilisés dans
+  // l'historique (anciennes et nouvelles désignations) : le filtre
+  // reflète les données, jamais une liste figée.
+  const serviceOptions = [
+    ...new Set(state.rows.map((row) => row.service).filter(Boolean)),
+  ].sort((a, b) => a.localeCompare(b, 'fr'));
+
   // Filtrage local (recherche + filtres)
   const filtered = state.rows.filter((t) => {
     if (query) {
@@ -131,7 +137,7 @@ export default function HistoryPage() {
             <label htmlFor="f_service">Service</label>
             <select id="f_service" value={service} onChange={(e) => setService(e.target.value)}>
               <option value="">Tous</option>
-              {SERVICE_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+              {serviceOptions.map((s) => <option key={s}>{s}</option>)}
             </select>
           </div>
           <div className="form-group">

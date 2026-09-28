@@ -28,7 +28,7 @@ ré-importer le même fichier ne crée aucun doublon.
 
 Usage (depuis backend/) :
 
-    python tools/import_registre_reel.py FICHIER.json --dry-run
+    python tools/import_registre_reel.py registre_reel_complet.json [--dry-run]
     python tools/import_registre_reel.py FICHIER.json
     python tools/import_registre_reel.py FICHIER.json --lot JSON-C1
 
@@ -496,7 +496,7 @@ def single_power_kw(text: str | None) -> float | None:
 
 
 def import_file(path: Path, dry_run: bool = False, lot: str = "JSON") -> int:
-    """Importe le JSON ; renvoie 0 si OK, 1 sinon.
+    """Importe un JSON simple (une liste) ; renvoie 0 si OK, 1 sinon.
 
     `lot` distingue les fichiers successifs dans source_ref (« JSON »,
     « JSON-C1 »…) : chaque import est idempotent pour SON fichier, et
@@ -505,9 +505,17 @@ def import_file(path: Path, dry_run: bool = False, lot: str = "JSON") -> int:
     """
     with open(path, encoding="utf-8") as fh:
         rows = json.load(fh)
+    return import_rows(rows, lot=lot, label=str(path), dry_run=dry_run)
+
+
+def import_rows(rows: list, lot: str, label: str, dry_run: bool = False) -> int:
+    """Importe des lignes DÉJÀ chargées (fichier simple ou fusionné).
+
+    `label` sert uniquement à l'affichage.
+    """
     # Format 4 (lot 4) : clés séparées « isolement_ph_ph »/« mle_ns »…
     is_format4 = bool(rows) and isinstance(rows[0], dict) and "mle_ns" in rows[0]
-    print(f"Fichier : {path} — {len(rows)} ligne(s) (lot « {lot} »"
+    print(f"Source : {label} — {len(rows)} ligne(s) (lot « {lot} »"
           + (", format 4" if is_format4 else "") + ")")
 
     db = SessionLocal()
@@ -732,8 +740,26 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true",
                         help="valide et compte sans rien écrire")
     parser.add_argument("--lot", default="JSON",
-                        help="nom du lot pour source_ref (défaut : JSON)")
+                        help="nom du lot pour source_ref (défaut : JSON ; "
+                             "ignoré pour le fichier fusionné)")
     args = parser.parse_args()
+
+    # FICHIER FUSIONNÉ : un objet dont les clés sont les lots, dans
+    # l'ordre du projet (« JSON », « JSON-C1 », « JSON-C2 », « JSON-C3 »).
+    # Une seule commande importe tout ; les source_ref sont IDENTIQUES
+    # à ceux des 4 fichiers séparés (aucune référence ne change).
+    with open(args.fichier, encoding="utf-8") as fh:
+        data = json.load(fh)
+    LOTS = ("JSON", "JSON-C1", "JSON-C2", "JSON-C3")
+    if isinstance(data, dict) and data and all(k in LOTS for k in data):
+        print(f"Fichier fusionné : {len(data)} lot(s) → import dans l'ordre du projet.")
+        code = 0
+        for lot in [l for l in LOTS if l in data]:
+            if import_rows(data[lot], lot=lot,
+                           label=f"{args.fichier.name} [{lot}]",
+                           dry_run=args.dry_run) != 0:
+                code = 1
+        sys.exit(code)
     sys.exit(import_file(args.fichier, dry_run=args.dry_run, lot=args.lot))
 
 

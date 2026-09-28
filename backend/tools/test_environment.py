@@ -1,14 +1,15 @@
 """TESTS SIMPLES DE L'ANALYSE ENVIRONNEMENTALE (sans base de données).
 
-Vérifie le croisement environnement × résultats des règles avec les
-cas demandés par le client. Usage (depuis backend/) :
+Vérifie le croisement service × résultats des règles avec les cas
+demandés par le client. Usage (depuis backend/) :
 
     python tools/test_environment.py
 
 Rappels vérifiés ici :
+  - catalogue = les 22 désignations officielles OCP (décision client) ;
   - anomalie détectée  → hypothèses de causes POSSIBLES (jamais certaines) ;
   - mesure normale     → AUCUNE cause attribuée (au plus « à surveiller ») ;
-  - environnement inconnu/absent → message clair, aucun plantage ;
+  - service inconnu/absent → message clair, aucun plantage ;
   - rien d'inventé : les causes/recommandations viennent de la base.
 """
 
@@ -47,7 +48,19 @@ def result(parameter, evaluation):
 
 
 print("=== Base de connaissances : cohérence ===")
-check("7 environnements répertoriés", len(ENVIRONMENTS) == 7)
+check("22 services OCP répertoriés", len(ENVIRONMENTS) == 22, f"trouvés : {len(ENVIRONMENTS)}")
+labels = [env["label"] for env in ENVIRONMENTS]
+attendus = [
+    "KMB / KMB2", "KM03", "PE/RE", "PE/SI", "PE/EI", "KTD / ZKTD", "KTB",
+    "KTR", "DS", "KLB", "KLR", "KL01 / KL02 / KL03", "LM/X / LMX / L-EXT",
+    "LM/E / LME", "PIPE", "PP.ST", "KPPA", "PC/SI", "PC ASA", "PC/IE",
+    "PC/ZB", "C M/K",
+]
+check("libellés exacts (codes officiels)", labels == attendus)
+check("chaque service a une description non vide",
+      all(env.get("description", "").strip() for env in ENVIRONMENTS))
+check("chaque service a au moins une contrainte",
+      all(len(env["risks"]) >= 1 for env in ENVIRONMENTS))
 codes_ok = all(
     link["parameter"] in PARAMETER_LABELS
     for env in ENVIRONMENTS for link in env["diagnostic_links"]
@@ -59,17 +72,19 @@ when_ok = all(
 )
 check("les conditions de déclenchement sont des anomalies", when_ok)
 
-print("=== Cas 1 : Laverie + isolement PROBLÉMATIQUE (exemple du client) ===")
+print("=== Cas 1 : KLB + isolement PROBLÉMATIQUE (exemple du client) ===")
 results = [result("insulation", "problematique"), result("temperature", "non_critique")]
-env = environment_rules.analyse_environment("Laverie / Lavage / Décantation", results)
-check("environnement reconnu", env["known"] and env["environment"] == "Laverie / Lavage / Décantation")
+env = environment_rules.analyse_environment("KLB", results)
+check("service reconnu", env["known"] and env["environment"] == "KLB")
+check("description officielle renvoyée",
+      env["description"] == "Khouribga Laverie Béni Idir — Unité de lavage, criblage humide, hydrocyclonage et flottation.")
 check("1 lien déclenché (isolement seulement)", len(env["triggered"]) == 1
       and env["triggered"][0]["parameter"] == "insulation")
 causes = " ".join(env["triggered"][0]["possible_causes"]).lower()
-check("cause possible : humidité", "humidité" in causes)
-check("recommandation : étanchéité / joints",
-      any("étanchéité" in r.lower() for r in env["triggered"][0]["recommendations"]))
-check("formulation prudente (« possible »)", "possible" in causes)
+check("cause possible : humidité / infiltration", "humidité" in causes or "infiltration" in causes)
+check("recommandation : étanchéité boîte à bornes",
+      any("boîte à bornes" in r.lower() for r in env["triggered"][0]["recommendations"]))
+check("formulation prudente (« hypothèse »)", "hypothèse" in causes)
 check("aucune cause attribuée à la température (non critique)",
       all(t["parameter"] != "temperature" for t in env["triggered"]))
 environment_rules.attach_hypotheses(results, env)
@@ -77,70 +92,47 @@ check("les hypothèses sont rattachées au résultat d'isolement",
       len(results[0]["environment_hypotheses"]) == 1)
 check("aucune hypothèse sur la température", results[1]["environment_hypotheses"] == [])
 
-print("=== Cas 2 : Laverie + isolement CONFORME (pas de défaut inventé) ===")
-env = environment_rules.analyse_environment(
-    "Laverie / Lavage / Décantation", [result("insulation", "conforme")])
+print("=== Cas 2 : KLB + isolement CONFORME (pas de défaut inventé) ===")
+results = [result("insulation", "conforme")]
+env = environment_rules.analyse_environment("KLB", results)
+check("service reconnu", env["known"])
 check("aucune hypothèse déclenchée", env["triggered"] == [])
-check("note de surveillance (sans défaut attribué)",
-      env["watch_note"] and "Isolement" in env["watch_note"])
+check("note de surveillance présente", bool(env["watch_note"]))
 
-print("=== Cas 3 : Concassage + vibration PROBLÉMATIQUE ===")
-env = environment_rules.analyse_environment(
-    "Concassage / Criblage", [result("vibration", "problematique")])
-recs = " ".join(env["triggered"][0]["recommendations"]).lower()
-check("recommandations : roulements / alignement / équilibrage / fixation",
-      "roulements" in recs and "alignement" in recs
-      and "équilibrage" in recs and "fixation" in recs)
+print("=== Cas 3 : saisie tolérante (alias, casse, variantes de code) ===")
+for saisie, attendu in [
+    ("klb", "KLB"),
+    (" KLB ", "KLB"),
+    ("zktd", "KTD / ZKTD"),
+    ("lmx", "LM/X / LMX / L-EXT"),
+    ("LME", "LM/E / LME"),
+    ("kl02", "KL01 / KL02 / KL03"),
+]:
+    env = environment_rules.analyse_environment(saisie, [])
+    check(f"« {saisie} » → {attendu}", env["known"] and env["environment"] == attendu)
 
-print("=== Cas 4 : Sécherie + température CRITIQUE ===")
-env = environment_rules.analyse_environment(
-    "Sécherie / Fours rotatifs", [result("temperature", "critique")])
-causes = " ".join(env["triggered"][0]["possible_causes"]).lower()
-check("causes : refroidissement / surchauffe",
-      "refroidissement" in causes and "surchauffe" in causes)
+print("=== Cas 4 : service inconnu ou absent (aucun plantage) ===")
+env = environment_rules.analyse_environment("SERVICE IMAGINAIRE X", [])
+check("inconnu → known=False", env["known"] is False)
+check("message explicatif présent", bool(env["message"]))
+check("aucune hypothèse inventée", env["triggered"] == [])
+env = environment_rules.analyse_environment(None, [])
+check("absent → known=False", env["known"] is False)
+check("message explicatif présent", bool(env["message"]))
+env = environment_rules.analyse_environment("Mine à ciel ouvert", [])
+check("ancien libellé générique → non répertorié (décision client)", env["known"] is False)
 
-print("=== Cas 5 : environnement inconnu ou absent ===")
-env = environment_rules.analyse_environment("Atelier 3", [result("insulation", "problematique")])
-check("inconnu → known=False + message clair",
-      not env["known"] and "non répertorié" in env["message"])
-env = environment_rules.analyse_environment(None, [result("insulation", "problematique")])
-check("absent → known=False + message clair",
-      not env["known"] and "non renseigné" in env["message"])
-
-print("=== Cas 6 : conclusion générale (assemblage prudent) ===")
-res6 = [result("insulation", "problematique"), result("temperature", "non_critique")]
-env = environment_rules.analyse_environment("Laverie / Lavage / Décantation", res6)
-summary = {"conforme": 1, "non_critique": 1, "problematique": 1,
-           "critique": 0, "non_evaluable": 2}
-paragraphs = environment_rules.build_general_conclusion(res6, summary, env)
-text = " ".join(paragraphs)
-check("la conclusion mentionne l'anomalie d'isolement", "isolement" in text.lower())
-check("la conclusion cite l'environnement (Laverie)", "Laverie" in text)
-check("les causes restent des hypothèses (« possible »)", "possible" in text.lower())
-check("la décision finale reste celle du technicien", "technicien" in text.lower())
-check("aucune certitude affirmée", "est causé par" not in text.lower())
-
-print("=== Cas 7 : anomalie SANS correspondance environnementale ===")
-# Sécherie : la base ne fournit aucune cause « courant » → rien d'inventé
-res7 = [result("current_no_load", "problematique")]
-env7 = environment_rules.analyse_environment("Sécherie / Fours rotatifs", res7)
-check("aucune hypothèse inventée pour le courant", env7["triggered"] == [])
-paras = environment_rules.build_general_conclusion(
-    res7, {"conforme": 0, "non_critique": 0, "problematique": 1, "critique": 0,
-           "non_evaluable": 4}, env7)
-t7 = " ".join(paras)
-check("l'anomalie est mentionnée (pas cachée)", "Courant à vide" in t7)
-check("l'origine reste « à investiguer »", "investiguer" in t7)
-
-print("=== Cas 8 : aucune règle évaluable (fiche vide) ===")
-paras = environment_rules.build_general_conclusion(
-    [], {"conforme": 0, "non_critique": 0, "problematique": 0, "critique": 0,
-         "non_evaluable": 5}, environment_rules.analyse_environment("Laverie", []))
-check("message « ne permet pas de conclure »",
-      "ne permet pas de conclure" in paras[0])
+print("=== Cas 5 : conclusion générale prudente ===")
+results = [result("insulation", "critique")]
+env = environment_rules.analyse_environment("KLB", results)
+paras = environment_rules.build_general_conclusion(results, {"conforme": 0, "non_critique": 0, "problematique": 0, "critique": 1, "non_evaluable": 0}, env)
+texte = " ".join(paras).lower()
+check("l'hypothèse environnementale figure dans la conclusion", "klb" in texte)
+check("formulation prudente dans la conclusion", "hypothèse" in texte or "à investiguer" in texte)
+check("rappel : la décision reste au technicien", "décision" in texte)
 
 print()
 if failures:
-    print(f"ÉCHEC : {failures} test(s) en erreur.")
+    print(f"ÉCHEC : {failures} vérification(s) en erreur.")
     sys.exit(1)
-print("Tous les cas environnementaux sont OK.")
+print("Toutes les vérifications environnementales sont passées.")

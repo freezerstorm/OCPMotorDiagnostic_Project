@@ -39,6 +39,10 @@ def entry_to_dict(row: RegistreEntry) -> dict:
         "bt_mt": row.bt_mt,
         "observation": row.observation,
         "source": row.source,
+        # Lien vers le test de l'application (None pour les lignes
+        # importées) : sert à repérer les mesures en défaut (cellules
+        # rouges du registre — décision client 28/09/2026).
+        "test_row_id": row.test_row_id,
     }
 
 

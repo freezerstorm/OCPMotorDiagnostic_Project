@@ -56,6 +56,23 @@ export function fetchMotor(motorId) {
   return request(`/motors/${encodeURIComponent(motorId)}`);
 }
 
+/** Liste des désignations de services (catalogue du champ « Service »). */
+export function fetchServices() {
+  return request('/services');
+}
+
+/**
+ * Ajoute une désignation de service au catalogue (409 si déjà présente).
+ * La nouvelle désignation devient disponible dans les futures listes.
+ */
+export function addService(name) {
+  return request('/services', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+}
+
 /**
  * Crée une fiche de diagnostic.
  * payload : { mode: 'manual'|'auto', motor: {...}, measurements: {...} }

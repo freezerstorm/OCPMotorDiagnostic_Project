@@ -24,7 +24,10 @@ import { Link } from 'react-router-dom';
 import { fetchRegistre } from '../services/api';
 
 // Colonnes du registre réel — intitulés et ordre du fichier client
-// (14 colonnes d'origine + Couplage + Isolement ph-m + R, lot 4).
+// (14 colonnes d'origine + Couplage + PH_m + R, lot 4). Décision client
+// 28/09/2026 : les colonnes d'isolement prennent leurs noms officiels
+// PH_PH (entre phases) et PH_m (phase-masse) et sont remplies depuis
+// les tests (voir backend/app/services/registre.py).
 const REGISTRE_COLUMNS = [
   { label: 'Date', key: 'entry_date', type: 'date' },
   { label: 'Matricule', key: 'matricule' },
@@ -35,8 +38,8 @@ const REGISTRE_COLUMNS = [
   { label: 'In', key: 'in_a' },
   { label: 'U0', key: 'uo_v' },
   { label: 'I0', key: 'io_a' },
-  { label: 'Isolement', key: 'isolement' },
-  { label: 'Isolement ph-m', key: 'isolement_ph_m' },
+  { label: 'PH_PH', key: 'isolement' },
+  { label: 'PH_m', key: 'isolement_ph_m' },
   { label: 'R', key: 'r' },
   { label: 'Nature', key: 'nature' },
   { label: 'Puissance (P)', key: 'puissance' },
@@ -127,7 +130,16 @@ export default function RegistryPage() {
                     // Liste jamais réordonnée : l'index est une clé stable.
                     <tr key={`${index}-${entry.matricule ?? ''}`}>
                       {REGISTRE_COLUMNS.map((column) => (
-                        <td key={column.key}>{cellValue(entry, column)}</td>
+                        <td
+                          key={column.key}
+                          className={
+                            (entry.cellules_critiques ?? []).includes(column.key)
+                              ? 'cell-critique'
+                              : undefined
+                          }
+                        >
+                          {cellValue(entry, column)}
+                        </td>
                       ))}
                     </tr>
                   ))}

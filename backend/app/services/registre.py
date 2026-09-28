@@ -24,7 +24,12 @@ CORRESPONDANCE (essai de l'application → colonne du registre réel) :
   6. In            → courant nominal (plaque), format « 78A »
   7. U0            → (non capturée pendant l'essai) — vide
   8. I0            → courant mesuré (fiche, sinon moyenne kit), « 41A »
-  9. Isolement     → mesures de la fiche jointes (« Ph/N : a / b / c MΩ »)
+  9. PH_PH         → isolements ENTRE PHASES de la fiche
+                     (Ph1-Ph2 / Ph2-Ph3 / Ph3-Ph1, « 145 / 138 / 141 MΩ »)
+     PH_m          → isolements PHASE-MASSE de la fiche
+                     (Ph1-M / Ph2-M / Ph3-M, « 310 / 298 / 305 MΩ »)
+     R             → résistances des enroulements
+                     (R12 / R23 / R31, « 0,152 / 0,152 / 0,153 Ω »)
  10. Nature        → désignation du moteur (précision client)
  11. Puissance (P) → puissance nominale (plaque), format « 45 kW »
  12. Société       → société en charge de la réparation, saisie par
@@ -45,6 +50,84 @@ from app.repositories.sql.registre_repository import RegistreRepository
 
 SOURCE_HISTORIQUE = "historique"   # ligne issue d'un import du registre réel
 SOURCE_ESSAI = "essai"             # ligne issue d'un essai de l'application
+
+# ------------------------------------------------------------------
+# CELLULES EN DÉFAUT (décision client 28/09/2026) : dans le registre,
+# la cellule d'une mesure signalée par les règles du test est AFFICHÉE
+# EN ROUGE. Correspondance règle → colonne du registre :
+#   courant à vide      → I0
+#   résistances         → R
+#   isolement (6 mesures, jugées UNE PAR UNE par la règle) :
+#     Ph1-Ph2/Ph2-Ph3/Ph3-Ph1 en défaut → PH_PH
+#     Ph1-M/Ph2-M/Ph3-M en défaut       → PH_m
+# L'anomalie des règles est « problematique » ou « critique » (code
+# « critique » : température/vibration, sans colonne au registre).
+# ------------------------------------------------------------------
+EVALUATIONS_ANOMALIE = ("problematique", "critique")
+
+_CELLULES_PARAMETRE = {
+    "current_no_load": ("io_a",),
+    "winding_resistance": ("r",),
+}
+
+_GROUPES_ISOLEMENT = {
+    "isolement": ("ph1_ph2", "ph2_ph3", "ph3_ph1"),          # PH_PH
+    "isolement_ph_m": ("ph1_ground", "ph2_ground", "ph3_ground"),  # PH_m
+}
+
+
+def cellules_critiques_du_test(analysis: dict) -> list[str]:
+    """Cellules du registre (clés API) dont la mesure est en défaut.
+
+    - courant / résistances : anomalie sur la règle entière ;
+    - isolement : le résultat d'isolement porte le détail PAR MESURE
+      (« items ») → seul le groupe en défaut est signalé (PH_PH ou
+      PH_m) ; sans détail disponible, repli sur l'évaluation globale.
+    Renvoie une liste de clés parmi : io_a, r, isolement, isolement_ph_m.
+    """
+    cells: list[str] = []
+    results = analysis.get("results", [])
+    for result in results:
+        cells.extend(_CELLULES_PARAMETRE.get(result.get("parameter"), ())
+                     if result.get("evaluation") in EVALUATIONS_ANOMALIE else ())
+
+    insulation = next(
+        (r for r in results if r.get("parameter") == "insulation"), None)
+    if insulation is not None:
+        items = insulation.get("items") or []
+        for cellule, cles in _GROUPES_ISOLEMENT.items():
+            if items:
+                en_defaut = any(
+                    item.get("evaluation") in EVALUATIONS_ANOMALIE
+                    for item in items if item.get("key") in cles
+                )
+            else:
+                en_defaut = insulation.get("evaluation") in EVALUATIONS_ANOMALIE
+            if en_defaut:
+                cells.append(cellule)
+    return cells
+
+
+def annotate_cellules_critiques(db: Session, entries: list[dict]) -> None:
+    """Ajoute à chaque ligne d'essai sa liste « cellules_critiques ».
+
+    Seuls les essais de l'application sont annotés (source « essai ») :
+    les lignes importées du registre réel sont des valeurs VERBATIM sans
+    test évaluable — jamais annotées, jamais modifiées.
+    """
+    from app.repositories.sql.sample_repository import SampleRepository
+    from app.services.diagnostic_engine import evaluate_test
+
+    for entry in entries:
+        entry["cellules_critiques"] = []
+        if entry.get("source") != SOURCE_ESSAI or not entry.get("test_row_id"):
+            continue
+        test = db.get(Test, entry["test_row_id"])
+        if test is None:
+            continue
+        samples = SampleRepository(db).list_for_test(test.id)
+        entry["cellules_critiques"] = cellules_critiques_du_test(
+            evaluate_test(test, samples))
 
 
 def _fmt_num(value) -> str | None:
@@ -86,17 +169,23 @@ def entry_values_from_test(test: Test, societe_reparation: str | None = None) ->
         if currents:
             io = round(statistics.fmean(currents), 2)
 
-    # Isolement : les mesures de la fiche, jointes telles quelles.
-    isolement_parts = []
-    if has_m:
-        ph_n = [m.ph1_ground_mohm, m.ph2_ground_mohm, m.ph3_ground_mohm]
-        ph_ph = [m.ph1_ph2_mohm, m.ph2_ph3_mohm, m.ph3_ph1_mohm]
-        if any(v is not None for v in ph_n):
-            isolement_parts.append("Ph/N : " + " / ".join(
-                t for t in (_fmt_num(v) for v in ph_n) if t is not None) + " MΩ")
-        if any(v is not None for v in ph_ph):
-            isolement_parts.append("Ph/Ph : " + " / ".join(
-                t for t in (_fmt_num(v) for v in ph_ph) if t is not None) + " MΩ")
+    # PH_PH / PH_m / R (décision client 28/09/2026) : trois colonnes
+    # DÉDIÉES remplies depuis les mesures du test —
+    #   PH_PH = isolements ENTRE PHASES (Ph1-Ph2 / Ph2-Ph3 / Ph3-Ph1) ;
+    #   PH_m  = isolements PHASE-MASSE (Ph1-M / Ph2-M / Ph3-M) ;
+    #   R     = résistances des enroulements (R12 / R23 / R31).
+    # Style du registre réel : valeurs jointes par « / », unité en fin
+    # de cellule. Champ absent → cellule vide (rien d'inventé).
+    def _joint(values, unit: str) -> str | None:
+        parts = [t for t in (_fmt_num(v) for v in values) if t is not None]
+        return " / ".join(parts) + f" {unit}" if parts else None
+
+    isolement_ph_ph = _joint(
+        [m.ph1_ph2_mohm, m.ph2_ph3_mohm, m.ph3_ph1_mohm] if has_m else [], "MΩ")
+    isolement_ph_m = _joint(
+        [m.ph1_ground_mohm, m.ph2_ground_mohm, m.ph3_ground_mohm] if has_m else [], "MΩ")
+    resistance_r = _joint(
+        [m.r12_ohm, m.r23_ohm, m.r31_ohm] if has_m else [], "Ω")
 
     return {
         "entry_date": test.created_at.date() if test.created_at else None,
@@ -107,7 +196,9 @@ def entry_values_from_test(test: Test, societe_reparation: str | None = None) ->
         "in_a": _glued(motor.rated_current_a, "A") if has_motor else None,
         "uo_v": None,                      # non capturée (voir correspondance)
         "io_a": _glued(io, "A"),
-        "isolement": " ; ".join(isolement_parts) if isolement_parts else None,
+        "isolement": isolement_ph_ph,          # colonne PH_PH
+        "isolement_ph_m": isolement_ph_m,      # colonne PH_m
+        "r": resistance_r,                     # colonne R
         "nature": motor.designation if has_motor else None,
         "puissance": _glued(motor.rated_power_kw, " kW") if has_motor else None,
         "societe": societe_reparation,     # société de réparation (technicien)
@@ -143,9 +234,16 @@ def sync_entry_for_test(db: Session, test: Test,
 
 
 def list_entries(db: Session) -> dict:
-    """Toutes les lignes du registre (ordonnées par date d'essai)."""
+    """Toutes les lignes du registre (ordonnées par date d'essai).
+
+    Chaque ligne d'essai porte en plus « cellules_critiques » : les
+    clés des cellules dont la mesure est signalée par les règles du
+    test (affichées en rouge par la page Registre).
+    """
     repo = RegistreRepository(db)
-    return {"count": repo.count(), "entries": repo.list()}
+    entries = repo.list()
+    annotate_cellules_critiques(db, entries)
+    return {"count": repo.count(), "entries": entries}
 
 
 def backfill_from_existing_tests(db: Session) -> list[str]:

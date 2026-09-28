@@ -12,6 +12,7 @@ from app.models.base import Base
 from app.models.motor import Motor
 from app.models.registre import RegistreEntry
 from app.models.sample import AcquisitionSample
+from app.models.service import Service
 from app.models.test import Measurements, Test
 
-__all__ = ["Base", "Motor", "Test", "Measurements", "AcquisitionSample", "RegistreEntry"]
+__all__ = ["Base", "Motor", "Test", "Measurements", "AcquisitionSample", "RegistreEntry", "Service"]

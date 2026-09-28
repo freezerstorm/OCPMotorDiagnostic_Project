@@ -56,12 +56,13 @@ def _result_label(result: dict) -> str:
 def analyse_environment(environment, results: list[dict]) -> dict:
     """Croise l'environnement du moteur avec les résultats des règles.
 
-    - environment : valeur du champ « Service / Environnement » (ou None) ;
+    - environment : valeur du champ « Service » de la fiche moteur (ou None) ;
     - results     : résultats normalisés des modules de règles.
 
     Renvoie la section « Analyse environnementale » :
-      known               : environnement répertorié dans la base ?
-      environment         : nom affiché (celui de la base si retrouvé)
+      known               : service répertorié dans la base ?
+      environment         : nom affiché (code du service si retrouvé)
+      description         : désignation complète officielle du service
       constraints         : contraintes environnementales (risques fournis)
       relevant_parameters : [{parameter, label}] paramètres sensibles ici
       triggered           : hypothèses de causes pour les anomalies détectées
@@ -73,17 +74,18 @@ def analyse_environment(environment, results: list[dict]) -> dict:
     env = find_environment(environment)
     if env is None:
         message = (
-            "Environnement de fonctionnement non renseigné ou non répertorié "
-            "(champ « Service / Environnement » de la fiche moteur) : l'analyse "
+            "Service non renseigné ou non répertorié "
+            "(champ « Service » de la fiche moteur) : l'analyse "
             "environnementale n'est pas disponible."
         ) if environment else (
-            "Environnement de fonctionnement non renseigné "
-            "(champ « Service / Environnement » de la fiche moteur) : "
+            "Service non renseigné "
+            "(champ « Service » de la fiche moteur) : "
             "l'analyse environnementale n'est pas disponible."
         )
         return {
             "known": False,
             "environment": environment,
+            "description": None,
             "constraints": [],
             "relevant_parameters": [],
             "triggered": [],
@@ -129,6 +131,7 @@ def analyse_environment(environment, results: list[dict]) -> dict:
     return {
         "known": True,
         "environment": env["label"],
+        "description": env.get("description"),
         "constraints": list(env["risks"]),
         "relevant_parameters": relevant,
         "triggered": triggered,

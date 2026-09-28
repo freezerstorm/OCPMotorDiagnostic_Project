@@ -21,8 +21,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { SERVICE_OPTIONS } from '../constants';
-import { fetchMotor } from '../services/api';
+import ServiceCombobox from '../components/ServiceCombobox';
+import { addService, fetchMotor, fetchServices } from '../services/api';
 
 // Conversion des champs de formulaire (camelCase) vers les champs API
 // (snake_case). Le MATRICULE est l'identifiant du moteur (décision
@@ -79,12 +79,37 @@ export default function HomePage() {
   const [values, setValues] = useState(loadDraft);
   const [lookupState, setLookupState] = useState('idle'); // idle|searching|found|notfound
   const [message, setMessage] = useState(null); // { type: 'error'|'success'|'info', text }
+  // Catalogue des services (liste déroulante du champ « Service ») ;
+  // une désignation ajoutée par le technicien y est ajoutée aussi.
+  const [services, setServices] = useState([]);
 
   // Brouillon → sessionStorage : consulter le registre puis revenir
   // retrouve le formulaire tel que le technicien l'a laissé.
   useEffect(() => {
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify(values));
   }, [values]);
+
+  // Catalogue des services chargé au démarrage (GET /api/v1/services).
+  // En cas d'indisponibilité : saisie libre quand même (aucun blocage).
+  useEffect(() => {
+    fetchServices()
+      .then((rows) => setServices(rows.map((row) => row.name)))
+      .catch(() => setServices([]));
+  }, []);
+
+  // « ➕ Ajouter » du champ Service : création PERSISTÉE en base, puis
+  // disponible immédiatement dans la liste (futures sessions comprises).
+  const handleAddService = async (name) => {
+    try {
+      await addService(name);
+      setServices((prev) => (
+        prev.some((s) => s.toLowerCase() === name.toLowerCase()) ? prev : [...prev, name]
+      ));
+      setMessage({ type: 'success', text: `Service « ${name} » ajouté à la liste.` });
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message });
+    }
+  };
 
   const setValue = (field) => (event) => {
     setValues({ ...values, [field]: event.target.value });
@@ -219,15 +244,14 @@ export default function HomePage() {
               </select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="f_service">Service / Environnement</label>
-              <select id="f_service" value={values.service} onChange={setValue('service')}>
-                <option value="">—</option>
-                {SERVICE_OPTIONS.map((service) => (
-                  <option key={service} value={service}>{service}</option>
-                ))}
-              </select>
-            </div>
+            <ServiceCombobox
+              id="service"
+              label="Service"
+              value={values.service}
+              onChange={(v) => setValues({ ...values, service: v })}
+              options={services}
+              onAdd={handleAddService}
+            />
 
             {renderTextField({ id: 'diOt', label: 'DI / OT' })}
           </div>

@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { DECISION_LABELS, TEST_MODE_LABELS } from '../constants';
 import { fetchAnalysis, fetchTest } from '../services/api';
+import { reportOptionsQuery } from '../utils/reportOptions';
 import { formatDateFr } from '../utils/format';
 
 
@@ -175,9 +176,14 @@ function ReportPreview({ test, analysis }) {
 function PdfDownload({ testId }) {
   const [state, setState] = useState({ status: 'loading', url: null, error: null });
 
+  // Les cases cochées sur la page ANALYSE (décochées par défaut) :
+  // relues à chaque chargement/régénération du PDF.
+  const pdfUrl = () =>
+    `/api/v1/tests/${encodeURIComponent(testId)}/report.pdf${reportOptionsQuery()}`;
+
   const loadPdf = () => {
     setState({ status: 'loading', url: null, error: null });
-    fetch(`/api/v1/tests/${encodeURIComponent(testId)}/report.pdf`)
+    fetch(pdfUrl())
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.blob();
@@ -214,7 +220,7 @@ function PdfDownload({ testId }) {
           </button>
           <a
             className="btn btn-ghost"
-            href={`/api/v1/tests/${encodeURIComponent(testId)}/report.pdf`}
+            href={pdfUrl()}
             target="_blank"
             rel="noreferrer"
           >

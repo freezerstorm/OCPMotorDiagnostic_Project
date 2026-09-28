@@ -6,12 +6,21 @@ SQLAlchemy. Toutes les conversions sont regroupées ici (un seul endroit
 """
 
 from app.models.motor import Motor
+from app.models.service import Service
 from app.models.test import Measurements, Test
 
 
 def _iso(dt) -> str | None:
     """Convertit une date Python en texte ISO (ou None)."""
     return dt.isoformat() if dt is not None else None
+
+
+def service_to_dict(service: Service) -> dict:
+    """Désignation de service → dictionnaire (clés identiques à ServiceRead)."""
+    return {
+        "id": service.id,
+        "name": service.name,
+    }
 
 
 def motor_to_dict(motor: Motor) -> dict:
