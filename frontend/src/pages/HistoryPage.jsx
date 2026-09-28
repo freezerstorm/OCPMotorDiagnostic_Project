@@ -5,7 +5,9 @@
 //   - chaque test est un enregistrement indépendant (un même
 //     moteur peut avoir plusieurs diagnostics) ;
 //   - tableau type « Google Sheets » ;
-//   - recherche par matricule (l'identifiant du moteur) ;
+//   - recherche par matricule (l'identifiant du moteur — UNE colonne) ;
+//   - cohérence E4 : pas de lien Rapport direct, le rapport se
+//     consulte depuis l'Analyse (bouton « Consulter ») ;
 //   - filtres : service, période, mode, décision ;
 //   - actions : consulter, ouvrir le rapport, archiver ;
 //   - PAS de suppression définitive (traçabilité obligatoire).
@@ -181,7 +183,6 @@ export default function HistoryPage() {
               <thead>
                 <tr>
                   <th>Matricule</th>
-                  <th>Matricule</th>
                   <th>Désignation</th>
                   <th>Date</th>
                   <th>Service</th>
@@ -193,7 +194,7 @@ export default function HistoryPage() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="muted">
+                    <td colSpan="7" className="muted">
                       {state.rows.length === 0
                         ? 'Aucun test enregistré pour le moment.'
                         : 'Aucun résultat pour ces filtres.'}
@@ -202,8 +203,7 @@ export default function HistoryPage() {
                 ) : (
                   filtered.map((t) => (
                     <tr key={t.id} className={t.archived ? 'row-archived' : ''}>
-                      <td><strong>{t.motorId}</strong></td>
-                      <td>{t.matricule}</td>
+                      <td><strong>{t.matricule !== '—' ? t.matricule : t.motorId}</strong></td>
                       <td>{t.designation}</td>
                       <td>{formatDateFr(t.date)}</td>
                       <td>{t.service || '—'}</td>
@@ -218,7 +218,6 @@ export default function HistoryPage() {
                       <td>
                         <div className="row-actions">
                           <Link className="btn btn-outline btn-sm" to={`/test/analyse?testId=${t.id}`}>Consulter</Link>
-                          <Link className="btn btn-outline btn-sm" to={`/test/rapport?testId=${t.id}`}>Rapport</Link>
                           {t.archived ? (
                             <span className="badge badge-neutral">Archivé</span>
                           ) : (
